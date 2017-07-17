@@ -1,0 +1,5 @@
+/dev/dxl	3000000	//Leg_Motor
+/dev/ati_l	1250000	//Left_ati
+/dev/ati_r	1250000	//Right_ati
+/dev/mti	115200	//mti
+/dev/upper	3000000	//Upbody_Motor

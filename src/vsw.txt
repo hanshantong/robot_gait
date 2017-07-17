@@ -1,0 +1,7 @@
+p	22
+c	12
+l	15
+com	-4.8
+cankle1	1
+cankle2	1
+T	0.9

@@ -1,0 +1,86 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ATI_NUM	P1MC.cpp	90;"	d	file:
+Broadcast	P1MC.cpp	/^}Broadcast;$/;"	t	typeref:struct:__anon1	file:
+CTRL_PERIOD_S	P1MC.cpp	65;"	d	file:
+DEGREE_TO_REG_VALUE_SF	P1MC.cpp	63;"	d	file:
+DXL_NUM	P1MC.cpp	60;"	d	file:
+ESC_ASCII_VALUE	P1MC.cpp	56;"	d	file:
+GEAR_RATIO	P1MC.cpp	62;"	d	file:
+GetSocketData	P1MC.cpp	/^void GetSocketData(float _nTime, dxl_Actuator *_dxl_actuator)$/;"	f
+InitComm	P1MC.cpp	/^void InitComm()$/;"	f
+InitTimer	P1MC.cpp	/^void InitTimer()$/;"	f
+InputPacket	P1MC.cpp	/^	float InputPacket[4];$/;"	m	struct:__anon1	file:
+MC_TIMER_PERIOD	P1MC.cpp	58;"	d	file:
+OutputPacket	P1MC.cpp	/^	float OutputPacket[54];\/\/the content of this packet$/;"	m	struct:__anon1	file:
+ReceiveExecuted	P1MC.cpp	/^	bool ReceiveExecuted;\/\/updated means that receiver can receive information$/;"	m	struct:__anon1	file:
+Round	P1MC.cpp	/^int Round(float number)$/;"	f
+SendData	P1MC.cpp	/^void SendData()$/;"	f
+SendExecuted	P1MC.cpp	/^	bool SendExecuted;\/\/true means that receiver has received the information,and the sender can send;false means the sender is sending$/;"	m	struct:__anon1	file:
+SetSocketOption	P1MC.cpp	/^void SetSocketOption(int socket){$/;"	f
+SocketEnable	P1MC.cpp	/^	bool SocketEnable;$/;"	m	struct:__anon1	file:
+UDPRcv	P1MC.cpp	/^int UDPRcv(int sock,float* buffer,int size){$/;"	f
+UDPSend	P1MC.cpp	/^int UDPSend(int sock,float* buffer,int size,char* IP,int port){$/;"	f
+UDPSocket	P1MC.cpp	/^int UDPSocket(int port){$/;"	f
+ati_1_port_name	P1MC.cpp	/^char ati_1_port_name[50];$/;"	v
+ati_2_port_name	P1MC.cpp	/^char ati_2_port_name[50];$/;"	v
+bIsSendData	P1MC.cpp	/^bool bIsSendData=false;$/;"	v
+broadcast	P1MC.cpp	/^Broadcast broadcast;$/;"	v
+buffer	P1MC.cpp	/^	char buffer[256];$/;"	m	struct:__anon1	file:
+counter	P1MC.cpp	/^unsigned long counter;$/;"	v
+delay	P1MC.cpp	/^int delay( int duration )$/;"	f
+disable	P1MC.cpp	/^void disable( int timerID )$/;"	f
+dxl_actuator	P1MC.cpp	/^dxl_Actuator *dxl_actuator = new dxl_Actuator[DXL_NUM];$/;"	v
+dxl_port_name	P1MC.cpp	/^char dxl_port_name[50];$/;"	v
+enable	P1MC.cpp	/^void enable( int timerID )$/;"	f
+fGoal	P1MC.cpp	/^	float fGoal;$/;"	m	struct:__anon1	file:
+fPos	P1MC.cpp	/^	float fPos;$/;"	m	struct:__anon1	file:
+fVel	P1MC.cpp	/^	float fVel;$/;"	m	struct:__anon1	file:
+fd	P1MC.cpp	/^int fd = 0;  $/;"	v
+flag_ati_thread_stop	P1MC.cpp	/^bool flag_ati_thread_stop = 0;$/;"	v
+flag_comm_thread_stop	P1MC.cpp	/^bool flag_comm_thread_stop = 0;$/;"	v
+flag_demo_sin	P1MC.cpp	/^bool flag_demo_sin[2] = {0,0};$/;"	v
+flag_dxl_mode	P1MC.cpp	/^uint8_t    flag_dxl_mode = 0;   \/\/0: torque mode,  3: position mode  $/;"	v
+flag_go_zero	P1MC.cpp	/^bool flag_go_zero[12] = {1,1,1,1,1,1,$/;"	v
+flag_mode_changed	P1MC.cpp	/^bool       flag_mode_changed = 0;$/;"	v
+flag_motion_thread_stop	P1MC.cpp	/^bool flag_motion_thread_stop = 0;$/;"	v
+flag_mti_thread_stop	P1MC.cpp	/^bool flag_mti_thread_stop = 0;$/;"	v
+gait_packet	P1MC.cpp	/^float gait_packet[2];$/;"	v
+gati_data	P1MC.cpp	/^struct gAti_Data    gati_data[2] = {0};$/;"	v	typeref:struct:gAti_Data
+getNextTimerEvent	P1MC.cpp	/^void getNextTimerEvent(int * timerIDs, int& numberOfEvents)$/;"	f
+getTickCount	P1MC.cpp	/^unsigned long getTickCount()$/;"	f
+getch	P1MC.cpp	/^int getch()$/;"	f
+gmti_data	P1MC.cpp	/^struct gMti_Data    gmti_data;$/;"	v	typeref:struct:gMti_Data
+inputPort	P1MC.cpp	/^int inputPort=51654;$/;"	v
+inputSocket	P1MC.cpp	/^	int inputSocket;$/;"	m	struct:__anon1	file:
+isRunning	P1MC.cpp	/^bool isRunning( int timerID )$/;"	f
+kbhit	P1MC.cpp	/^int kbhit(void)$/;"	f
+listen	P1MC.cpp	/^void* listen(void * data)$/;"	f
+loadConfig	P1MC.cpp	/^bool loadConfig()$/;"	f
+main	P1MC.cpp	/^int main(int argc, char*argv[])$/;"	f
+motion	P1MC.cpp	/^void* motion(void* data) $/;"	f
+mti_port_name	P1MC.cpp	/^char mti_port_name[50];$/;"	v
+nATI	P1MC.cpp	/^int nATI=0; \/\/1:start ati thread$/;"	v
+nDXL	P1MC.cpp	/^int nDXL=0; \/\/1:start DXL thread$/;"	v
+nGaitIndex	P1MC.cpp	/^int nGaitIndex=0;$/;"	v
+nMTI	P1MC.cpp	/^int nMTI=0; \/\/1:start mti thread$/;"	v
+nati_speed	P1MC.cpp	/^int nati_speed;$/;"	v
+ndxl_speed	P1MC.cpp	/^int ndxl_speed;$/;"	v
+nmti_speed	P1MC.cpp	/^int nmti_speed;$/;"	v
+openTimer	P1MC.cpp	/^void openTimer()$/;"	f
+outputPort	P1MC.cpp	/^int outputPort=51657;$/;"	v
+outputSocket	P1MC.cpp	/^	int outputSocket;$/;"	m	struct:__anon1	file:
+port	P1MC.cpp	/^	int port;$/;"	m	struct:__anon1	file:
+robotID	P1MC.cpp	/^	char robotID;$/;"	m	struct:__anon1	file:
+sensorATI_1	P1MC.cpp	/^void* sensorATI_1(void* data) {$/;"	f
+sensorATI_2	P1MC.cpp	/^void* sensorATI_2(void* data) {$/;"	f
+sensorMTI	P1MC.cpp	/^void* sensorMTI(void* data) {$/;"	f
+setTimer	P1MC.cpp	/^void setTimer( int timerID, int interval )$/;"	f
+thread_control	P1MC.cpp	/^void* thread_control(void* data) $/;"	f
+timerInterval	P1MC.cpp	/^int timerInterval[MAX_NUM_TIMERS];$/;"	v
+timerMask	P1MC.cpp	/^int timerMask[MAX_NUM_TIMERS];$/;"	v
+timerZeroPoint	P1MC.cpp	/^int timerZeroPoint[MAX_NUM_TIMERS];$/;"	v
