@@ -6468,13 +6468,13 @@ void Robot::softening_ankle(int left, int32_t * t_x, int32_t * t_y){
 
 void Robot::kick(bool isLeftLeg, int kickType, double yaw_angle) {
     walking_state = 8;
-    // double target_x = 0.2;
-    // double target_y = 0.09;
+    double target_x = 0.2;
+    double target_y = 0.09;
     double target_z = parameters.robot_ankle_to_foot + 0.1;
     double pitch_angle = 0;
     
     int size=0;
-    kick_calc_swing(isLeftLeg, kickType, KICK_DISTANCE * cos(yaw_angle), KICK_DISTANCE * sin(yaw_angle), target_z, yaw_angle, pitch_angle);
+    kick_calc_swing(isLeftLeg, kickType, KICK_DISTANCE , KICK_DISTANCE , target_z, yaw_angle, pitch_angle);
     std::cout << "before support" << std::endl;
     kick_calc_support(isLeftLeg,kickType);
     std::cout << "zmp" << std::endl;
@@ -6528,7 +6528,7 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
         ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
         ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
         ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
-    }2
+    }
     
     double kick_time;
     //double kick2lift_time;
@@ -6562,19 +6562,19 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
     }
     if(isLeftLeg){
         //init to lift
-        Robot::kick_swing_trajectory_generator(0, parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, LIFT_X_BACK * cos(yaw_angle) , parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, yaw_angle, 0, KICK_LIFT_TIME,0);
+        Robot::kick_swing_trajectory_generator(0, parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, LIFT_X_BACK , parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, 0, 0, KICK_LIFT_TIME,0);
         //lift to kick
-        Robot::kick_swing_trajectory_generator(LIFT_X_BACK * cos(yaw_angle), parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, yaw_angle, 0, target_x, target_y, target_z, yaw_angle, 0, kick_time,1);
+        Robot::kick_swing_trajectory_generator(LIFT_X_BACK , parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, 0, 0, target_x, parameters.robot_width/2, target_z, 0, 0, kick_time,1);
         //kick to dsp
-        Robot::kick_swing_trajectory_generator(target_x, target_y, target_z, yaw_angle, 0, DSP_KICKLEG_X, parameters.robot_width/2, parameters.robot_ankle_to_foot, yaw_angle, 0, kick2dsp_time, 2); 
+        Robot::kick_swing_trajectory_generator(target_x, parameters.robot_width/2, target_z, 0, 0, DSP_KICKLEG_X, parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, kick2dsp_time, 2); 
     }
     else {
         //init to lift
-        Robot::kick_swing_trajectory_generator(0, -parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, 0, -parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, yaw_angle, 0, KICK_LIFT_TIME,0);
+        Robot::kick_swing_trajectory_generator(0, -parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, 0, -parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, 0, 0, KICK_LIFT_TIME,0);
         //lift to kick
-        Robot::kick_swing_trajectory_generator(0, -parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, yaw_angle, 0, target_x, target_y, target_z, yaw_angle, 0, KICK_SWING_TIME_STRONG,1);
+        Robot::kick_swing_trajectory_generator(0, -parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, 0, 0, target_x, -parameters.robot_width/2, target_z, 0, 0, KICK_SWING_TIME_STRONG,1);
         //kick to dsp
-        Robot::kick_swing_trajectory_generator(target_x, target_y, target_z, yaw_angle, 0, DSP_KICKLEG_X, -parameters.robot_width/2, parameters.robot_ankle_to_foot, yaw_angle, 0, kick2dsp_time, 2); 
+        Robot::kick_swing_trajectory_generator(target_x, -parameters.robot_width/2, target_z, 0, 0, DSP_KICKLEG_X, -parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, kick2dsp_time, 2); 
     }
 
     //dsp
@@ -6582,23 +6582,23 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
         ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, DSP_KICKLEG_X);
         ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts,parameters.robot_width/2);
         ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
-        ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts,yaw_angle);
+        ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts,0);
         ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts,0);
     }
     else{
         ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, DSP_KICKLEG_X);
         ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts,-parameters.robot_width/2);
         ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
-        ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts,yaw_angle);
+        ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts,0);
         ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts,0);
     }
 
     //move a step
     if(isLeftLeg){
-        Robot::kick_swing_trajectory_generator(0, -parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, DSP_KICKLEG_X , -parameters.robot_width/2, parameters.robot_ankle_to_foot, yaw_angle, 0, KICK_LAST_STEP_TIME,3);
+        Robot::kick_swing_trajectory_generator(0, -parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, DSP_KICKLEG_X , -parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, KICK_LAST_STEP_TIME,3);
     }
     else {
-        Robot::kick_swing_trajectory_generator(0, parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, DSP_KICKLEG_X, parameters.robot_width/2, parameters.robot_ankle_to_foot, yaw_angle, 0, KICK_LAST_STEP_TIME,3);
+        Robot::kick_swing_trajectory_generator(0, parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, DSP_KICKLEG_X, parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, KICK_LAST_STEP_TIME,3);
     }
 
     //move CoM back to middle
