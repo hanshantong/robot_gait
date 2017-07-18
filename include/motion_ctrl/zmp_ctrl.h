@@ -33,7 +33,7 @@
 	/***********************Kick Part START*************************/
 #define KICK_INCREMENT 0.053
 #define KICK_INCREMENT_DSP 0.05
-#define LIFT_HEIGHT 0.10
+#define LIFT_HEIGHT 0.05
 #define LIFT_X_BACK -0.05
 #define KICK_DISTANCE 0.2
 #define DSP_KICKLEG_X 0.15

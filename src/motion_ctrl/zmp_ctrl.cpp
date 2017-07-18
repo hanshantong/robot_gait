@@ -6470,7 +6470,7 @@ void Robot::kick(bool isLeftLeg, int kickType, double yaw_angle) {
     walking_state = 8;
     double target_x = 0.2;
     double target_y = 0.09;
-    double target_z = parameters.robot_ankle_to_foot + LIFT_HEIGHT + KICK_HEIGHT;
+    double target_z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
     double kick_pitch = 0; //-pi/10;
     double landing_pitch = -pi/12;
     
@@ -6499,7 +6499,7 @@ void Robot::kick(bool isLeftLeg, int kickType, double yaw_angle) {
 void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double target_y, double target_z, double yaw_angle, double kick_pitch,double landing_pitch) {
 
 //    const int pointNum = 7;
-    double kick_swing_z = 0;
+    double kick_swing_z = 0.05;
     //Initial
     if(isLeftLeg){
         ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, 0);
