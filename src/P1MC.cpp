@@ -1501,6 +1501,7 @@ while(1)
 	                        		}
 	                        		bool leftKick = broadcast.InputPacket[1];
 	                        		int kick_type = broadcast.InputPacket[2];
+									kick_type = 2; // parameter for test 
 	                        		double kicking_angle = broadcast.InputPacket[2];
 	                        		h13->kick(leftKick,kick_type,kicking_angle);
 
