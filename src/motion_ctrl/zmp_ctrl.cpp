@@ -6471,7 +6471,7 @@ void Robot::kick(bool isLeftLeg, int kickType, double yaw_angle) {
     double target_x = 0.2;
     double target_y = 0.09;
     double target_z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
-    double kick_pitch = 0; //-pi/10;
+    double kick_pitch = -pi/10; 
     double landing_pitch = -pi/12;
     
     int size=0;
@@ -6608,7 +6608,9 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
         double kick_parameters_temp_t_yaw[yawNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
         (kick_parameters.yaw).t_data = kick_parameters_temp_t_yaw;
 
+        //======================================================
         //kick_parameters_KICK -- Parameters For KICK!!!
+        //======================================================
         kickParameterALL kick_parameters_KICK;
         //x and t_x
         const int xNum_KICK = 7;
@@ -6650,8 +6652,9 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
         double kick_parameters_KICK_temp_t_yaw[yawNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
         (kick_parameters_KICK.yaw).t_data = kick_parameters_KICK_temp_t_yaw;
 
-        
-        //Points
+        //====================
+        //KEY Points
+        //====================
         kickPoint init;
         init.x = 0;
         init.y = parameters.robot_width/2;
@@ -6669,8 +6672,8 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
         kickPoint kick;
         kick.x = target_x;
         kick.y = parameters.robot_width/2;
-        kick.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
-        kick.pitch = 0;
+        kick.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT +kick_swing_z;
+        kick.pitch = kick_pitch;
         kick.yaw = 0;
 
         //Execute
@@ -6783,7 +6786,7 @@ void Robot::kick_swing_trajectory_generator_one_dimension(int mode, double start
             break;
         }
     }
-    std::cout<<"******************************************************FUCK3"<<std::endl;
+    // std::cout<<"******************************************************FUCK3"<<std::endl;
 }
 
 //Kick Swing Trajectory Generator, created by liuyuezhang 2017-7-16, modified by liuyuezhang 2017-7-18
