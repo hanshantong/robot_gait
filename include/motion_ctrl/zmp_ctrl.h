@@ -45,19 +45,15 @@
 #define KICK_INIT_TIME 1.0
 #define KICK_COMTRANS_TIME 2.0
 #define KICK_LIFT_TIME 2.0
-#define KICK_SWING_TIME_SOFT 1.2
+#define KICK_SWING_TIME_SOFT 1.2	//0.5
 #define KICK_SWING_TIME_MEDIUM 0.7
-#define KICK_SWING_TIME_STRONG 0.5
-
-// #define KICK_KICK2LIFT_SOFT_TIME 1.2
-// #define KICK_KICK2LIFT_MEDIUM_TIME 1.0
-// #define KICK_KICK2LIFT_STRONG_TIME 0.55
+#define KICK_SWING_TIME_STRONG 0.4
 
 // #define KICK_LIFT2INIT_TIME 2.0
 
 #define KICK_KICK2DSP_TIME_SOFT 1.2
 #define KICK_KICK2DSP_TIME_MEDIUM 1.0
-#define KICK_KICK2DSP_TIME_STRONG 0.6
+#define KICK_KICK2DSP_TIME_STRONG 1.0
 
 #define KICK_DSP_TIME 3.0
 
@@ -450,7 +446,7 @@ public:
 		int closest(std::vector<double>  vec, double value);
 //KICK
 		 //kick
-		void kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double target_y, double target_z, double yaw_angle,double pitch_angle);
+		void kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double target_y, double target_z, double yaw_angle,double kick_pitch, double landing_pitch);
 		void kick_swing_trajectory_generator(double startX, double startY, double startZ, double startTheta, double startPsi, double endX, double endY, double endZ, double endTheta, double endPsi, double time,int motionMode);
 		void kick_calc_support(bool isLeftLeg, int kickType);
 		void kick_calc_zmp(bool isLeftLeg, int kickType);

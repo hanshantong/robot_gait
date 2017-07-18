@@ -1083,7 +1083,7 @@ void* motion(void* data)
     	else{
     		pid_controller[i].PID_setgains(Kp, Ki, Kd1, Kd2);
     	}	
-    	if( (i == 0) || (i == 6) ){
+    	if( (i == 5) || (i == 11) ){
     		pid_controller[i].PID_setoutMin(-300);
     		pid_controller[i].PID_setoutMax(300);
     	}
