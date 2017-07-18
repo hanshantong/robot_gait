@@ -63,6 +63,25 @@
 #define KICK_SOFT 0
 #define KICK_MEDIUM 1
 #define KICK_STRONG 2
+
+struct kickPoint
+{
+	double x, y, z, pitch, yaw;
+};
+
+struct kickParameterOne
+{
+	int num;
+	double *data;
+};
+
+struct kickParameterALL
+{
+	kickParameterOne x, y, z, pitch, yaw;
+	kickParameterOne t_x, t_y, t_z, t_pitch, t_yaw;
+};
+
+
 /***********************Kick Part END*************************/
 
 
@@ -447,7 +466,8 @@ public:
 //KICK
 		 //kick
 		void kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double target_y, double target_z, double yaw_angle,double kick_pitch, double landing_pitch);
-		void kick_swing_trajectory_generator(double startX, double startY, double startZ, double startTheta, double startPsi, double endX, double endY, double endZ, double endTheta, double endPsi, double time,int motionMode);
+		void kick_swing_trajectory_generator_one_dimension(int mode, double startX, double offsetX, int pointNumX, double* parametersX, double time, int pointNumT, double* parametersT);
+		void kick_swing_trajectory_generator(kickPoint* start, kickPoint* end, kickParameters* parameters, double time);
 		void kick_calc_support(bool isLeftLeg, int kickType);
 		void kick_calc_zmp(bool isLeftLeg, int kickType);
 
