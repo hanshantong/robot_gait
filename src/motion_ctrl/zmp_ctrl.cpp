@@ -6621,6 +6621,7 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
     // }
 }
 
+<<<<<<< HEAD
 //Kick Swing Trajectory Generator, created by liuyuezhang 2017-7-16
 void Robot::kick_swing_trajectory_generator(double startX, double startY, double startZ, double startTheta, double startPsi, 
                                             double endX, double endY, double endZ, double endTheta, double endPsi, double time,int motionMode) {
@@ -6689,6 +6690,85 @@ void Robot::kick_swing_trajectory_generator(double startX, double startY, double
         ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(), 1, psi_ref(i * parameters.Ts));
     }
     //std::cout<<"swing end: " << ref_x_swing_foot_trajectory.size() << std::endl;
+=======
+//The Spline Function, created by liuyuezhang 2017-7-18
+void Robot::kick_swing_trajectory_generator_one_dimension(int mode, double startX, double offsetX, int pointNumX, double* parametersX, double time, int pointNumT, double* parametersT) {
+    //Data Spline
+    double ResX[pointNumX];
+    for(int i = 0; i < pointNumX; i++) {
+        ResX[i] = startX + offsetX * parametersX[i];
+    }
+    const vector<double> resX(ResX, ResX + pointNumX);
+    //T Spline
+    double ResT[pointNumT];
+    for(int i = 0; i < pointNumT; i++) {
+        ResT[i] = time * parametersT[i];
+    }
+    const vector<double> resT(ResT, ResT + pointNumT);
+
+    tk::spline ref;
+    ref.set_points(resT, resX);
+
+    switch (mode) {
+        case 1: {
+            //lyz: using double may cause bugs here - float percise error
+            for(int i = 0; i < time/parameters.Ts; i++) {
+                ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(), 1, ref(i * parameters.Ts));
+            }
+            break;
+        }
+        case 2: {
+            for(int i = 0; i < time/parameters.Ts; i++) {
+                ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(), 1, ref(i * parameters.Ts));
+            }
+            break;
+        }
+        case 3: {
+            for(int i = 0; i < time/parameters.Ts; i++) {
+                ref_z_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(), 1, ref(i * parameters.Ts));
+            }
+            break;
+        }
+        case 4: {
+            for(int i = 0; i < time/parameters.Ts; i++) {
+                ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(), 1, theta_ref(i * parameters.Ts));
+            }
+            break;
+        }
+        case 5: {
+            for(int i = 0; i < time/parameters.Ts; i++) {
+                ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(), 1, psi_ref(i * parameters.Ts));
+            }
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+}
+
+//Kick Swing Trajectory Generator, created by liuyuezhang 2017-7-16, modified by liuyuezhang 2017-7-18
+//start: startPoint, end: endPoint, parameters: spice parameters, time: kick time
+void Robot::kick_swing_trajectory_generator(kickPoint* start, kickPoint* end, kickParameters* parameters, double time) {
+
+    kickPoint offset;
+    offset.x = end.x - start.x;
+    offset.y = end.y - start.y;
+    offset.z = end.z - start.z;
+    offset.pitch = end.pitch - start.pitch;
+    offset.yaw = end.yaw - start.yaw;
+
+    kick_swing_trajectory_generator_one_dimension(1, start.x, offset.x, parameters->x->num, parameters->x->data, time,
+                                                  parameters->t_x->num, parametes->t_x->data);
+    kick_swing_trajectory_generator_one_dimension(2, start.y, offset.y, parameters->y->num, parameters->y->data, time,
+                                                  parameters->t_y->num, parametes->t_y->data);
+    kick_swing_trajectory_generator_one_dimension(3, start.z, offset.z, parameters->z->num, parameters->z->data, time,
+                                                  parameters->t_z->num, parametes->t_z->data);
+    kick_swing_trajectory_generator_one_dimension(4, start.pitch, offset.pitch, parameters->pitch->num, parameters->pitch->data, time,
+                                                  parameters->t_pitch->num, parametes->t_pitch->data);
+    kick_swing_trajectory_generator_one_dimension(5, start.yaw, offset.yaw, parameters->yaw->num, parameters->yaw->data, time,
+                                                  parameters->t_yaw->num, parametes->t_yaw->data);
+>>>>>>> ec9eee8b8782be83cecaf34638371c46800dc52f
 }
 
 //Kicking Support Leg Calculation, created by lhy
