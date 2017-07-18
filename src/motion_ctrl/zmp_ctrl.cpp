@@ -6500,37 +6500,21 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
 
 //    const int pointNum = 7;
     double kick_swing_z = 0.05;
+    int leftFlag = (isLeftLeg == 1)?1:-1;
+
     //Initial
-    if(isLeftLeg){
-        ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, 0);
-        ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts,parameters.robot_width/2);
-        ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
-        ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts,0);
-        ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts,0);
-    }
-    else{
-        ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, 0);
-        ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts,-parameters.robot_width/2);
-        ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
-        ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts,0);
-        ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts,0);
-    }
+    ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, 0);
+    ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, leftFlag * parameters.robot_width/2);
+    ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
+    ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts,0);
+    ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts,0);
 
     //Move COM
-    if(isLeftLeg){
-        ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, 0);
-        ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,parameters.robot_width/2);
-        ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
-        ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
-        ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
-    }
-    else{
-        ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, 0);
-        ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,-parameters.robot_width/2);
-        ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
-        ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
-        ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
-    }
+    ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, 0);
+    ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, leftFlag * parameters.robot_width/2);
+    ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
+    ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
+    ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
     
     double kick_time;
     //double kick2lift_time;
@@ -6561,129 +6545,130 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
             kick2dsp_time= KICK_KICK2DSP_TIME_STRONG;
             break;
         }
-    }
-    std::cout<<"kick_pitch = "<<kick_pitch<<", landing_pitch = "<<landing_pitch<<std::endl;
-    if(isLeftLeg){
+    }   
         
-        //Parameters
-        //kick_parameters -- Parameters For ALL
-        kickParameterALL kick_parameters;
-        //x and t_x
-        const int xNum = 7;
-        (kick_parameters.x).num = xNum;
-        double kick_parameters_temp_x[xNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-        (kick_parameters.x).data = kick_parameters_temp_x;
-        double kick_parameters_temp_t_x[xNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-        (kick_parameters.x).t_data = kick_parameters_temp_t_x;
-        
-        //y and t_y
-        const int yNum = 7;
-        (kick_parameters.y).num = yNum;
-        double kick_parameters_temp_y[yNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-        (kick_parameters.y).data = kick_parameters_temp_y;
-        double kick_parameters_temp_t_y[yNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-        (kick_parameters.y).t_data = kick_parameters_temp_t_y;
+    //Parameters
+    //======================================================
+    //kick_parameters -- Parameters For ALL
+    //======================================================
+    kickParameterALL kick_parameters;
+    //x and t_x
+    const int xNum = 7;
+    (kick_parameters.x).num = xNum;
+    double kick_parameters_temp_x[xNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters.x).data = kick_parameters_temp_x;
+    double kick_parameters_temp_t_x[xNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters.x).t_data = kick_parameters_temp_t_x;
+    
+    //y and t_y
+    const int yNum = 7;
+    (kick_parameters.y).num = yNum;
+    double kick_parameters_temp_y[yNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters.y).data = kick_parameters_temp_y;
+    double kick_parameters_temp_t_y[yNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters.y).t_data = kick_parameters_temp_t_y;
 
-        //z and t_z
-        const int zNum = 7;
-        (kick_parameters.z).num = zNum;
-        double kick_parameters_temp_z[zNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-        (kick_parameters.z).data = kick_parameters_temp_z;
-        double kick_parameters_temp_t_z[zNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-        (kick_parameters.z).t_data = kick_parameters_temp_t_z;
+    //z and t_z
+    const int zNum = 7;
+    (kick_parameters.z).num = zNum;
+    double kick_parameters_temp_z[zNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters.z).data = kick_parameters_temp_z;
+    double kick_parameters_temp_t_z[zNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters.z).t_data = kick_parameters_temp_t_z;
 
-        //pitch and t_pitch
-        const int pitchNum = 7;
-        (kick_parameters.pitch).num = pitchNum;
-        double kick_parameters_temp_pitch[pitchNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-        (kick_parameters.pitch).data = kick_parameters_temp_pitch;
-        double kick_parameters_temp_t_pitch[pitchNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-        (kick_parameters.pitch).t_data = kick_parameters_temp_t_pitch;
+    //pitch and t_pitch
+    const int pitchNum = 7;
+    (kick_parameters.pitch).num = pitchNum;
+    double kick_parameters_temp_pitch[pitchNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters.pitch).data = kick_parameters_temp_pitch;
+    double kick_parameters_temp_t_pitch[pitchNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters.pitch).t_data = kick_parameters_temp_t_pitch;
 
-        //yaw and t_yaw
-        const int yawNum = 7;
-        (kick_parameters.yaw).num = yawNum;
-        double kick_parameters_temp_yaw[yawNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-        (kick_parameters.yaw).data = kick_parameters_temp_yaw;
-        double kick_parameters_temp_t_yaw[yawNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-        (kick_parameters.yaw).t_data = kick_parameters_temp_t_yaw;
+    //yaw and t_yaw
+    const int yawNum = 7;
+    (kick_parameters.yaw).num = yawNum;
+    double kick_parameters_temp_yaw[yawNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters.yaw).data = kick_parameters_temp_yaw;
+    double kick_parameters_temp_t_yaw[yawNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters.yaw).t_data = kick_parameters_temp_t_yaw;
 
-        //======================================================
-        //kick_parameters_KICK -- Parameters For KICK!!!
-        //======================================================
-        kickParameterALL kick_parameters_KICK;
-        //x and t_x
-        const int xNum_KICK = 7;
-        (kick_parameters_KICK.x).num = xNum;
-        double kick_parameters_KICK_temp_x[xNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-        (kick_parameters_KICK.x).data = kick_parameters_KICK_temp_x;
-        double kick_parameters_KICK_temp_t_x[xNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-        (kick_parameters_KICK.x).t_data = kick_parameters_KICK_temp_t_x;
-        
-        //y and t_y
-        const int yNum_KICK = 7;
-        (kick_parameters_KICK.y).num = yNum_KICK;
-        double kick_parameters_KICK_temp_y[yNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
-        (kick_parameters_KICK.y).data = kick_parameters_KICK_temp_y;
-        double kick_parameters_KICK_temp_t_y[yNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-        (kick_parameters_KICK.y).t_data = kick_parameters_KICK_temp_t_y;
+    //======================================================
+    //kick_parameters_KICK -- Parameters For KICK!!!
+    //======================================================
+    kickParameterALL kick_parameters_KICK;
+    //x and t_x
+    const int xNum_KICK = 7;
+    (kick_parameters_KICK.x).num = xNum;
+    double kick_parameters_KICK_temp_x[xNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_KICK.x).data = kick_parameters_KICK_temp_x;
+    double kick_parameters_KICK_temp_t_x[xNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_KICK.x).t_data = kick_parameters_KICK_temp_t_x;
+    
+    //y and t_y
+    const int yNum_KICK = 7;
+    (kick_parameters_KICK.y).num = yNum_KICK;
+    double kick_parameters_KICK_temp_y[yNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_KICK.y).data = kick_parameters_KICK_temp_y;
+    double kick_parameters_KICK_temp_t_y[yNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_KICK.y).t_data = kick_parameters_KICK_temp_t_y;
 
-        //z and t_z
-        const int zNum_KICK = 7;
-        (kick_parameters_KICK.z).num = zNum_KICK;
-        double kick_parameters_KICK_temp_z[zNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
-        (kick_parameters_KICK.z).data = kick_parameters_KICK_temp_z;
-        double kick_parameters_KICK_temp_t_z[zNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-        (kick_parameters_KICK.z).t_data = kick_parameters_KICK_temp_t_z;
+    //z and t_z
+    const int zNum_KICK = 7;
+    (kick_parameters_KICK.z).num = zNum_KICK;
+    double kick_parameters_KICK_temp_z[zNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_KICK.z).data = kick_parameters_KICK_temp_z;
+    double kick_parameters_KICK_temp_t_z[zNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_KICK.z).t_data = kick_parameters_KICK_temp_t_z;
 
-        //pitch and t_pitch
-        const int pitchNum_KICK = 7;
-        (kick_parameters_KICK.pitch).num = pitchNum_KICK;
-        double kick_parameters_KICK_temp_pitch[pitchNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
-        (kick_parameters_KICK.pitch).data = kick_parameters_KICK_temp_pitch;
-        double kick_parameters_KICK_temp_t_pitch[pitchNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-        (kick_parameters_KICK.pitch).t_data = kick_parameters_KICK_temp_t_pitch;
+    //pitch and t_pitch
+    const int pitchNum_KICK = 7;
+    (kick_parameters_KICK.pitch).num = pitchNum_KICK;
+    double kick_parameters_KICK_temp_pitch[pitchNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_KICK.pitch).data = kick_parameters_KICK_temp_pitch;
+    double kick_parameters_KICK_temp_t_pitch[pitchNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_KICK.pitch).t_data = kick_parameters_KICK_temp_t_pitch;
 
-        //yaw and t_yaw
-        const int yawNum_KICK = 7;
-        (kick_parameters_KICK.yaw).num = yawNum_KICK;
-        double kick_parameters_KICK_temp_yaw[yawNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
-        (kick_parameters_KICK.yaw).data = kick_parameters_KICK_temp_yaw;
-        double kick_parameters_KICK_temp_t_yaw[yawNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-        (kick_parameters_KICK.yaw).t_data = kick_parameters_KICK_temp_t_yaw;
+    //yaw and t_yaw
+    const int yawNum_KICK = 7;
+    (kick_parameters_KICK.yaw).num = yawNum_KICK;
+    double kick_parameters_KICK_temp_yaw[yawNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_KICK.yaw).data = kick_parameters_KICK_temp_yaw;
+    double kick_parameters_KICK_temp_t_yaw[yawNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_KICK.yaw).t_data = kick_parameters_KICK_temp_t_yaw;
 
-        //====================
-        //KEY Points
-        //====================
-        kickPoint init;
-        init.x = 0;
-        init.y = parameters.robot_width/2;
-        init.z = parameters.robot_ankle_to_foot;
-        init.pitch = 0;
-        init.yaw = 0;
-        
-        kickPoint lift;
-        lift.x = LIFT_X_BACK;
-        lift.y = parameters.robot_width/2;
-        lift.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
-        lift.pitch = 0;
-        lift.yaw = 0;
-        
-        kickPoint kick;
-        kick.x = target_x;
-        kick.y = parameters.robot_width/2;
-        kick.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT +kick_swing_z;
-        kick.pitch = kick_pitch;
-        kick.yaw = 0;
-
-        //Execute
-        Robot::kick_swing_trajectory_generator(&init, &lift, &kick_parameters, KICK_LIFT_TIME);
-        Robot::kick_swing_trajectory_generator(&lift, &kick, &kick_parameters_KICK, kick_time);
-        
+    //====================
+    //KEY Points
+    //====================
+    kickPoint init;
+    init.x = 0;
+    init.y = leftFlag * parameters.robot_width/2;
+    init.z = parameters.robot_ankle_to_foot;
+    init.pitch = 0;
+    init.yaw = 0;
+    
+    kickPoint lift;
+    lift.x = LIFT_X_BACK;
+    lift.y = leftFlag * parameters.robot_width/2;
+    lift.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
+    lift.pitch = 0;
+    lift.yaw = 0;
+    
+    kickPoint kick;
+    kick.x = target_x;
+    kick.y = leftFlag * parameters.robot_width/2;
+    kick.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT +kick_swing_z;
+    kick.pitch = kick_pitch;
+    kick.yaw = 0;
+    
+    //======================================================
+    //Execute
+    //======================================================
+    Robot::kick_swing_trajectory_generator(&init, &lift, &kick_parameters, KICK_LIFT_TIME);
+    Robot::kick_swing_trajectory_generator(&lift, &kick, &kick_parameters_KICK, kick_time);
+    
 
         //kick to dspLIFT_HEIGHT
         // Robot::kick_swing_trajectory_generator(target_x, parameters.robot_width/2, target_z, kick_pitch, 0, DSP_KICKLEG_X, parameters.robot_width/2, parameters.robot_ankle_to_foot, landing_pitch, 0, kick2dsp_time, 2); 
-    }
     // else {
     //     //init to lift
     //     Robot::kick_swing_trajectory_generator(0, -parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, 0, -parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, 0, 0, KICK_LIFT_TIME,0);
