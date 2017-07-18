@@ -36,7 +36,7 @@ int walking = 0;
 int new_command = 1;
 int prev_ID = -1;
 int ID;
-int run_dxl = 1;
+int run_dxl = 1 ;
 /////////////////////////////////////THREAD DEFINE    //////////////////////////////////////////
 
 int nATI=0; //1:start ati thread

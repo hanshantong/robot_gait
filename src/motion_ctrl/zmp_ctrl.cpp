@@ -6273,7 +6273,7 @@ void Robot::softening_ankle(int left, int32_t * t_x, int32_t * t_y){
                                 // std::cout << "Orientation offset to large: " << dlib::trans(orientation_offset_r) << std::endl;
                             }
                         }
-                        right_foot.R    =   Ryaw(ref_psi_swing_foot_trajectory.at(time_step))*Rpitch(0)*Rroll(0*pi/180);
+                        right_foot.R    =   Ryaw(ref_psi_swing_foot_trajectory.at(time_step))*Rpitch(ref_theta_swing_foot_trajectory.at(time_step))*Rroll(0*pi/180);
                     }
                     body.p          = x_ref.at(time_step), y_ref.at(time_step), z_ref.at(time_step);
                     if(parameters.control_pitch == 1){
@@ -6352,7 +6352,7 @@ void Robot::softening_ankle(int left, int32_t * t_x, int32_t * t_y){
                             }
                         }
                                             // std::cout << "5 " << std::endl;
-                        left_foot.R    = Ryaw(ref_psi_swing_foot_trajectory.at(time_step))*Rpitch(0)*Rroll(0*pi/180);
+                        left_foot.R    = Ryaw(ref_psi_swing_foot_trajectory.at(time_step))*Rpitch(ref_theta_swing_foot_trajectory.at(time_step))*Rroll(0*pi/180);
                                             // std::cout << "5 " << std::endl;
 
                     }
@@ -6471,7 +6471,7 @@ void Robot::kick(bool isLeftLeg, int kickType, double yaw_angle) {
     double target_x = 0.2;
     double target_y = 0.09;
     double target_z = parameters.robot_ankle_to_foot + LIFT_HEIGHT + KICK_HEIGHT;
-    double kick_pitch = -pi/4;
+    double kick_pitch = 0; //-pi/10;
     double landing_pitch = -pi/12;
     
     int size=0;
@@ -6499,6 +6499,7 @@ void Robot::kick(bool isLeftLeg, int kickType, double yaw_angle) {
 void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double target_y, double target_z, double yaw_angle, double kick_pitch,double landing_pitch) {
 
 //    const int pointNum = 7;
+    double kick_swing_z = 0;
     //Initial
     if(isLeftLeg){
         ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, 0);
@@ -6561,11 +6562,12 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
             break;
         }
     }
+    std::cout<<"kick_pitch = "<<kick_pitch<<", landing_pitch = "<<landing_pitch<<std::endl;
     if(isLeftLeg){
         //init to lift
         Robot::kick_swing_trajectory_generator(0, parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, LIFT_X_BACK , parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, 0, 0, KICK_LIFT_TIME,0);
         //lift to kick
-        Robot::kick_swing_trajectory_generator(LIFT_X_BACK , parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, 0, 0, target_x, parameters.robot_width/2, target_z, kick_pitch, 0, kick_time,1);
+        Robot::kick_swing_trajectory_generator(LIFT_X_BACK , parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, 0, 0, target_x, parameters.robot_width/2, target_z + kick_swing_z, kick_pitch, 0, kick_time,1);
         //kick to dsp
         // Robot::kick_swing_trajectory_generator(target_x, parameters.robot_width/2, target_z, kick_pitch, 0, DSP_KICKLEG_X, parameters.robot_width/2, parameters.robot_ankle_to_foot, landing_pitch, 0, kick2dsp_time, 2); 
     }
@@ -6573,7 +6575,7 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
         //init to lift
         Robot::kick_swing_trajectory_generator(0, -parameters.robot_width/2, parameters.robot_ankle_to_foot, 0, 0, 0, -parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, 0, 0, KICK_LIFT_TIME,0);
         //lift to kick
-        Robot::kick_swing_trajectory_generator(0, -parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, 0, 0, target_x, -parameters.robot_width/2, target_z, kick_pitch, 0, KICK_SWING_TIME_STRONG,1);
+        Robot::kick_swing_trajectory_generator(0, -parameters.robot_width/2, parameters.robot_ankle_to_foot + LIFT_HEIGHT, 0, 0, target_x, -parameters.robot_width/2, target_z + kick_swing_z, kick_pitch, 0, KICK_SWING_TIME_STRONG,1);
         //kick to dsp
         // Robot::kick_swing_trajectory_generator(target_x, -parameters.robot_width/2, target_z, kick_pitch, 0, DSP_KICKLEG_X, -parameters.robot_width/2, parameters.robot_ankle_to_foot, landing_pitch, 0, kick2dsp_time, 2); 
     }
@@ -6641,7 +6643,7 @@ void Robot::kick_swing_trajectory_generator(double startX, double startY, double
     double propPara[motionModeNum][pointNum] = {
                                                     {0, 0.1, 0.4, 0.7, 0.9, 0.97, 1.0}, //lift
                                                     {0, 0.05, 0.23, 0.5, 0.81, 0.97, 1.0}, //kick
-                                                    {0, 0.1, 0.4, 0.7, 0.9, 0.97, 1.0}, //kick_2_dsp
+                                                    {0, 0.1 , 0.4, 0.7, 0.9, 0.97, 1.0}, //kick_2_dsp
                                                     {0, 0.1, 0.4, 0.7, 0.9, 0.97, 1.0}  //move a step
                                                 };
     for(int i = 0; i < pointNum; i++) {
@@ -6683,6 +6685,7 @@ void Robot::kick_swing_trajectory_generator(double startX, double startY, double
         ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(), 1, y_ref(i * parameters.Ts));
         ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(), 1, z_ref(i * parameters.Ts));
         ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(), 1, theta_ref(i * parameters.Ts));
+        std::cout<<"theta_ref["<<i<<"]= "<<theta_ref(i * parameters.Ts)<<std::endl;
         ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(), 1, psi_ref(i * parameters.Ts));
     }
     //std::cout<<"swing end: " << ref_x_swing_foot_trajectory.size() << std::endl;
