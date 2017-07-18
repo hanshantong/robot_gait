@@ -72,13 +72,12 @@ struct kickPoint
 struct kickParameterOne
 {
 	int num;
-	double *data;
+	double *data, *t_data;
 };
 
 struct kickParameterALL
 {
 	kickParameterOne x, y, z, pitch, yaw;
-	kickParameterOne t_x, t_y, t_z, t_pitch, t_yaw;
 };
 
 
@@ -466,8 +465,8 @@ public:
 //KICK
 		 //kick
 		void kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double target_y, double target_z, double yaw_angle,double kick_pitch, double landing_pitch);
-		void kick_swing_trajectory_generator_one_dimension(int mode, double startX, double offsetX, int pointNumX, double* parametersX, double time, int pointNumT, double* parametersT);
-		void kick_swing_trajectory_generator(kickPoint* start, kickPoint* end, kickParameters* parameters, double time);
+		void kick_swing_trajectory_generator_one_dimension(int mode, double startX, double offsetX, int pointNum, double* parametersX, double* parametersT, double time);
+		void kick_swing_trajectory_generator(kickPoint* start, kickPoint* end, kickParameterALL* parameters, double time);
 		void kick_calc_support(bool isLeftLeg, int kickType);
 		void kick_calc_zmp(bool isLeftLeg, int kickType);
 
