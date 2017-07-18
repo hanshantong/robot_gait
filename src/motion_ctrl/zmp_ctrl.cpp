@@ -6565,7 +6565,8 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
     std::cout<<"kick_pitch = "<<kick_pitch<<", landing_pitch = "<<landing_pitch<<std::endl;
     if(isLeftLeg){
         
-        //Parameters Init to Lift
+        //Parameters
+        //kick_parameters -- Parameters For ALL
         kickParameterALL kick_parameters;
         //x and t_x
         const int xNum = 7;
@@ -6607,7 +6608,50 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
         double kick_parameters_temp_t_yaw[yawNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
         (kick_parameters.yaw).t_data = kick_parameters_temp_t_yaw;
 
-        //init to lift
+        //kick_parameters_KICK -- Parameters For KICK!!!
+        kickParameterALL kick_parameters_KICK;
+        //x and t_x
+        const int xNum_KICK = 7;
+        (kick_parameters_KICK.x).num = xNum;
+        double kick_parameters_KICK_temp_x[xNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+        (kick_parameters_KICK.x).data = kick_parameters_KICK_temp_x;
+        double kick_parameters_KICK_temp_t_x[xNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+        (kick_parameters_KICK.x).t_data = kick_parameters_KICK_temp_t_x;
+        
+        //y and t_y
+        const int yNum_KICK = 7;
+        (kick_parameters_KICK.y).num = yNum_KICK;
+        double kick_parameters_KICK_temp_y[yNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
+        (kick_parameters_KICK.y).data = kick_parameters_KICK_temp_y;
+        double kick_parameters_KICK_temp_t_y[yNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+        (kick_parameters_KICK.y).t_data = kick_parameters_KICK_temp_t_y;
+
+        //z and t_z
+        const int zNum_KICK = 7;
+        (kick_parameters_KICK.z).num = zNum_KICK;
+        double kick_parameters_KICK_temp_z[zNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
+        (kick_parameters_KICK.z).data = kick_parameters_KICK_temp_z;
+        double kick_parameters_KICK_temp_t_z[zNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+        (kick_parameters_KICK.z).t_data = kick_parameters_KICK_temp_t_z;
+
+        //pitch and t_pitch
+        const int pitchNum_KICK = 7;
+        (kick_parameters_KICK.pitch).num = pitchNum_KICK;
+        double kick_parameters_KICK_temp_pitch[pitchNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
+        (kick_parameters_KICK.pitch).data = kick_parameters_KICK_temp_pitch;
+        double kick_parameters_KICK_temp_t_pitch[pitchNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+        (kick_parameters_KICK.pitch).t_data = kick_parameters_KICK_temp_t_pitch;
+
+        //yaw and t_yaw
+        const int yawNum_KICK = 7;
+        (kick_parameters_KICK.yaw).num = yawNum_KICK;
+        double kick_parameters_KICK_temp_yaw[yawNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
+        (kick_parameters_KICK.yaw).data = kick_parameters_KICK_temp_yaw;
+        double kick_parameters_KICK_temp_t_yaw[yawNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+        (kick_parameters_KICK.yaw).t_data = kick_parameters_KICK_temp_t_yaw;
+
+        
+        //Points
         kickPoint init;
         init.x = 0;
         init.y = parameters.robot_width/2;
@@ -6621,16 +6665,18 @@ void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double
         lift.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
         lift.pitch = 0;
         lift.yaw = 0;
-        Robot::kick_swing_trajectory_generator(&init, &lift, &kick_parameters, KICK_LIFT_TIME);
         
-        //lift to kick
         kickPoint kick;
         kick.x = target_x;
         kick.y = parameters.robot_width/2;
         kick.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
         kick.pitch = 0;
         kick.yaw = 0;
-        Robot::kick_swing_trajectory_generator(&lift, &kick, &kick_parameters, kick_time);
+
+        //Execute
+        Robot::kick_swing_trajectory_generator(&init, &lift, &kick_parameters, KICK_LIFT_TIME);
+        Robot::kick_swing_trajectory_generator(&lift, &kick, &kick_parameters_KICK, kick_time);
+        
 
         //kick to dspLIFT_HEIGHT
         // Robot::kick_swing_trajectory_generator(target_x, parameters.robot_width/2, target_z, kick_pitch, 0, DSP_KICKLEG_X, parameters.robot_width/2, parameters.robot_ankle_to_foot, landing_pitch, 0, kick2dsp_time, 2); 
@@ -6690,10 +6736,7 @@ void Robot::kick_swing_trajectory_generator_one_dimension(int mode, double start
     //Data, T Spline
     double ResX[pointNum];
     double ResT[pointNum];
-std::cout<<"******************************************************FUCK1"<<std::endl;
-std::cout<<mode<<"  "<<startX<<"    "<<offsetX<<"   "<<pointNum<<std::endl;
-                    // std::cout<<"******************************************************FUCK1"<<std::endl;
-                    // std::cout<<parametersX[0]<<"    "<<parametersT[0]<<std::endl;
+
     for(int i = 0; i < pointNum; i++) {
         ResX[i] = startX + offsetX * parametersX[i];
         ResT[i] = time * parametersT[i];
@@ -6703,7 +6746,7 @@ std::cout<<mode<<"  "<<startX<<"    "<<offsetX<<"   "<<pointNum<<std::endl;
 
     tk::spline ref;
     ref.set_points(resT, resX);
-std::cout<<"******************************************************FUCK2"<<std::endl;
+
     switch (mode) {
         case 1: {
             //lyz: using double may cause bugs here - float percise error
