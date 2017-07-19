@@ -1499,9 +1499,10 @@ while(1)
 	                        			time_zero=time;
 	                        			bIsWalkStart=true;
 	                        		}
+									//kick Parameters
 	                        		bool leftKick = broadcast.InputPacket[1];
 	                        		int kick_type = broadcast.InputPacket[2];
-									kick_type = 2; // parameter for test 
+									kick_type = KICK_STRONG; // kickType
 	                        		double kicking_angle = broadcast.InputPacket[2];
 	                        		h13->kick(0,kick_type,kicking_angle);
 
