@@ -471,7 +471,7 @@ public:
 		void kick_swing_trajectory_generator(kickPoint* start, kickPoint* end, kickParameterALL* parameters, double time);
 		void kick_calc_support(bool isLeftLeg, int kickType);
 		void kick_calc_zmp(bool isLeftLeg, int kickType);
-
+        void kick_zmp_trajectory_generator(kickPoint* end, double time);
 
 	};
 
