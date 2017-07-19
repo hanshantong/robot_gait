@@ -32,7 +32,7 @@
 
 	/***********************Kick Part START*************************/
 #define KICK_INCREMENT 0.053
-#define KICK_INCREMENT_DSP 0.01
+#define KICK_INCREMENT_DSP 0.03
 #define LIFT_HEIGHT 0.05
 #define LIFT_X_BACK -0.05
 #define KICK_DISTANCE 0.2
@@ -41,7 +41,7 @@
 
 #define KICK_COMTRANS_PERCENTAGE 50.0
 #define KICK_KICK2DSP_PERCENTAGE 100.0
-#define KICK_DSP_PERCENTAGE 50.0
+#define KICK_DSP_PERCENTAGE 80.0
 
 //Kick Time Parameters
 #define KICK_INIT_TIME 1.0
@@ -55,7 +55,7 @@
 
 #define KICK_KICK2DSP_TIME_SOFT 1.5
 #define KICK_KICK2DSP_TIME_MEDIUM 1.5
-#define KICK_KICK2DSP_TIME_STRONG 3.0
+#define KICK_KICK2DSP_TIME_STRONG 2.0
 
 #define KICK_DSP_TIME 3.0
 
@@ -75,6 +75,7 @@ struct kickParameterOne
 {
 	int num;
 	double *data, *t_data;
+	double offset;
 };
 
 struct kickParameterALL
