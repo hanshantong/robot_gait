@@ -30,23 +30,24 @@
 // #include "gyro_info/com.h"
 // #include "gyro_info/gyro_euler.h"
 
-	/***********************Kick Part START*************************/
+/***********************Kick Part START*************************/
+//Kick Distance Parameters
 #define KICK_INCREMENT 0.053
 #define KICK_INCREMENT_DSP 0.03
+
 #define LIFT_HEIGHT 0.05
 #define LIFT_X_BACK -0.05
 #define KICK_DISTANCE 0.2
 #define DSP_KICKLEG_X 0.17
 #define KICK_HEIGHT 0.05
 
-#define KICK_COMTRANS_PERCENTAGE 50.0
-#define KICK_KICK2DSP_PERCENTAGE 100.0
-#define KICK_DSP_PERCENTAGE 80.0
-
 //Kick Time Parameters
 #define KICK_INIT_TIME 1.0
+
 #define KICK_COMTRANS_TIME 2.0
+
 #define KICK_LIFT_TIME 2.0
+
 #define KICK_SWING_TIME_SOFT   1.0	//about 0.8m
 #define KICK_SWING_TIME_MEDIUM 0.7  //about 2.3m
 #define KICK_SWING_TIME_STRONG 0.4  //about 5.5m
@@ -205,9 +206,11 @@ public:
 			int get_time_step();
 
 			void save_last_step(double * support_x_last, double * support_y_last, double * support_z_last, double * support_psi_last,
-				double * swing_x_last, double * swing_y_last, double * swing_z_last, double * swing_theta_last, double * swing_psi_last,
-				double * x_zmp_last, double * y_zmp_last);
-			void kick(bool isLeftLeg, int kickType, double yaw_angle=0.0);
+			double * swing_x_last, double * swing_y_last, double * swing_z_last, double * swing_theta_last, double * swing_psi_last,
+			double * x_zmp_last, double * y_zmp_last);
+			
+		//KICK
+		void kick(bool isLeftLeg, int kickType, double yaw_angle = 0.0);
 
 		private:
 			std::vector<double> leftIsSupportLeg_vector;
@@ -450,15 +453,15 @@ public:
 		void calculate_absolute_foot_position();
 		void generate_foot_print_on_spline(std::vector<double> xSpline, std::vector<double> ySpline, std::vector<double> * x_footprint_on_spline, std::vector<double> * y_footprint_on_spline,std::vector<double> * yaw_footprint_on_spline);
 		int closest(std::vector<double>  vec, double value);
-//KICK
-		 //kick
-		void kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double target_y, double target_z, double yaw_angle,double kick_pitch, double landing_pitch);
-		void kick_swing_trajectory_generator_one_dimension(int mode, double startX, double offsetX, int pointNum, double* parametersX, double* parametersT, double time);
-		void kick_calc_support(bool isLeftLeg, int kickType);
-		void kick_calc_zmp(bool isLeftLeg, int kickType);
 
-        void kick_swing_trajectory_generator(kickPoint* end, double time, kickParameterALL* parameters);
-        void kick_zmp_trajectory_generator(kickPoint* end, double time);
+	//kick
+		void kick_force_insert(kickPoint swing, kickPoint support, kickPoint zmp, double time);
+		void kick_wait(double time);
+		void kick_generator(bool isLeftLeg, int kickType, kickPoint target);
+		void kick_swing_generator(kickPoint end, double time, double parameter[][7], const int pointNum);
+        void kick_swing_trajectory_generator_one_dimension(int mode, double startX, double offsetX, const int pointNum, double* parametersX, double* parametersT, double time);
+		void kick_support_generator(kickPoint end, double time);
+		void kick_zmp_generator(kickPoint end, double time);
 
 	};
 
