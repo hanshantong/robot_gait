@@ -31,14 +31,19 @@
 // #include "gyro_info/gyro_euler.h"
 
 	/***********************Kick Part START*************************/
+//COMTRANS Y INCREMENT
 #define KICK_INCREMENT 0.053
-#define KICK_INCREMENT_DSP 0.04
+#define KICK_INCREMENT_DSP 0.045
+//LIFT
 #define LIFT_HEIGHT 0.05
-#define LIFT_X_BACK -0.05
+#define LIFT_X_INCREMENT -0.05
+#define LIFT_Y_INCREMENT -0.03
+//KICK
 #define KICK_DISTANCE 0.2
 #define DSP_KICKLEG_X 0.17
 #define KICK_HEIGHT 0.05
 
+//CoM translation percentage
 #define KICK_COMTRANS_PERCENTAGE 50.0
 #define KICK_KICK2DSP_PERCENTAGE 100.0
 #define KICK_DSP_PERCENTAGE 80.0
