@@ -6481,6 +6481,21 @@ void Robot::kick(bool isLeftLeg, int kickType, double yaw_angle) {
     std::cout << "zmp" << std::endl;
     kick_calc_zmp(isLeftLeg, kickType);
 
+    //KICK STOP TO WAIT FOT MPC
+    ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(), KICK_STOP_TIME/parameters.Ts, ref_x_swing_foot_trajectory.back());
+    ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(), KICK_STOP_TIME/parameters.Ts, ref_y_swing_foot_trajectory.back());
+    ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(), KICK_STOP_TIME/parameters.Ts, ref_z_swing_foot_trajectory.back());
+    ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(), KICK_STOP_TIME/parameters.Ts, ref_theta_swing_foot_trajectory.back());
+    ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(), KICK_STOP_TIME/parameters.Ts, ref_psi_swing_foot_trajectory.back());
+
+    ref_x_support_foot_trajectory.insert(ref_x_support_foot_trajectory.end(), KICK_STOP_TIME/parameters.Ts, ref_x_support_foot_trajectory.back());
+    ref_y_support_foot_trajectory.insert(ref_y_support_foot_trajectory.end(), KICK_STOP_TIME/parameters.Ts, ref_y_support_foot_trajectory.back()); //switch to left leg is support leg
+    ref_z_support_foot_trajectory.insert(ref_z_support_foot_trajectory.end(), KICK_STOP_TIME/parameters.Ts, ref_z_support_foot_trajectory.back());
+    ref_psi_support_foot_trajectory.insert(ref_psi_support_foot_trajectory.end(), KICK_STOP_TIME/parameters.Ts, ref_psi_support_foot_trajectory.back());
+
+    ref_x_zmp_trajectory.insert(ref_x_zmp_trajectory.end(), KICK_STOP_TIME / parameters.Ts, ref_x_zmp_trajectory.back());
+    ref_y_zmp_trajectory.insert(ref_y_zmp_trajectory.end(), KICK_STOP_TIME / parameters.Ts, ref_y_zmp_trajectory.back());
+    
     //return the size of trajectory
     size=ref_x_support_foot_trajectory.size();
 
@@ -6904,9 +6919,6 @@ void Robot::kick_zmp_trajectory_generator(kickPoint* end, double time){
     double x2 = end->x;
     double y2 = end->y;
 
-    std::cout<<"*******************************************FUCK"<<std::endl;
-    std::cout<<"starty"<<y1<<"endy"<<y2<<std::endl;
-
     //Special Case: Wait
     if(x2 == ref_x_zmp_trajectory.back() && y2 == ref_x_zmp_trajectory.back()){
         ref_x_zmp_trajectory.insert(ref_x_zmp_trajectory.end(), time, x1);
@@ -6919,11 +6931,13 @@ void Robot::kick_zmp_trajectory_generator(kickPoint* end, double time){
     double offsetY = y2 - y1;
     double timeNum = floor(time / parameters.Ts); //ceil is important: for double
 
-    for (int k = 0; k < timeNum; k++){
+    for (int k = 1; k <= timeNum; k++){
         double x = x1 + offsetX * k / timeNum;
         double y = y1 + offsetY * k / timeNum;
         ref_x_zmp_trajectory.push_back(x);
         ref_y_zmp_trajectory.push_back(y);
+        std::cout<<"FUCK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+        std::cout<<y<<std::endl;
     }
 }
 
@@ -6992,13 +7006,14 @@ void Robot::kick_calc_zmp(bool isLeftLeg, int kickType) {
     lastStep.y = leftFlag * (parameters.robot_width/2 + KICK_INCREMENT_DSP);
 
     kickPoint movBack;
-    movBack.x = DSP_KICKLEG_X + parameters.zmp_offset_x;
+    movBack.x = DSP_KICKLEG_X;
     movBack.y = 0;
 
     //======================================================
     //Execute
     //======================================================
-    //init
+    //init3080
+
     kick_zmp_trajectory_generator(&init, KICK_INIT_TIME);
     //movCom
     kick_zmp_trajectory_generator(&movCom, KICK_COMTRANS_TIME);

@@ -32,7 +32,7 @@
 
 	/***********************Kick Part START*************************/
 #define KICK_INCREMENT 0.053
-#define KICK_INCREMENT_DSP 0.03
+#define KICK_INCREMENT_DSP 0.04
 #define LIFT_HEIGHT 0.05
 #define LIFT_X_BACK -0.05
 #define KICK_DISTANCE 0.2
@@ -60,6 +60,8 @@
 #define KICK_DSP_TIME 3.0
 
 #define KICK_LAST_STEP_TIME 3.0 
+
+#define KICK_STOP_TIME 2.5	//wait for the MPC
 
 //kickType Parameters
 #define KICK_SOFT 0
