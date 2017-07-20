@@ -51,8 +51,6 @@
 #define KICK_SWING_TIME_MEDIUM 0.7  //about 2.3m
 #define KICK_SWING_TIME_STRONG 0.4  //about 5.5m
 
-// #define KICK_LIFT2INIT_TIME 2.0
-
 #define KICK_KICK2DSP_TIME_SOFT 1.5
 #define KICK_KICK2DSP_TIME_MEDIUM 1.5
 #define KICK_KICK2DSP_TIME_STRONG 2.0
@@ -70,19 +68,6 @@ struct kickPoint
 {
 	double x, y, z, pitch, yaw;
 };
-
-struct kickParameterOne
-{
-	int num;
-	double *data, *t_data;
-	double offset;
-};
-
-struct kickParameterALL
-{
-	kickParameterOne x, y, z, pitch, yaw;
-};
-
 
 /***********************Kick Part END*************************/
 
@@ -469,9 +454,10 @@ public:
 		 //kick
 		void kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double target_y, double target_z, double yaw_angle,double kick_pitch, double landing_pitch);
 		void kick_swing_trajectory_generator_one_dimension(int mode, double startX, double offsetX, int pointNum, double* parametersX, double* parametersT, double time);
-		void kick_swing_trajectory_generator(kickPoint* start, kickPoint* end, kickParameterALL* parameters, double time);
 		void kick_calc_support(bool isLeftLeg, int kickType);
 		void kick_calc_zmp(bool isLeftLeg, int kickType);
+
+        void kick_swing_trajectory_generator(kickPoint* end, double time, kickParameterALL* parameters);
         void kick_zmp_trajectory_generator(kickPoint* end, double time);
 
 	};

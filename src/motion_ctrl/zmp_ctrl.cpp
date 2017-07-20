@@ -6467,22 +6467,20 @@ void Robot::softening_ankle(int left, int32_t * t_x, int32_t * t_y){
 
 
 void Robot::kick(bool isLeftLeg, int kickType, double yaw_angle) {
+
     walking_state = 8;
-    double target_x = 0.2;
-    double target_y = 0.09;
-    double target_z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
-    double kick_pitch = -pi/10; 
-    double landing_pitch = -pi/12;
-    
-    int size = 0;//refresh the size at the beginning
-    kick_calc_swing(isLeftLeg, kickType, KICK_DISTANCE , KICK_DISTANCE , target_z, yaw_angle, kick_pitch, landing_pitch);
-    std::cout << "before support" << std::endl;
-    kick_calc_support(isLeftLeg,kickType);
-    std::cout << "zmp" << std::endl;
-    kick_calc_zmp(isLeftLeg, kickType);
+
+    kickPoint target;
+    target.x = 0.2;
+    target.y = 0.09;
+    target.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
+    target.pitch = -pi/10;
+    target.yaw = 0;
+
+    kick_generator(isLeftLeg, kickType, target);
 
     //return the size of trajectory
-    size=ref_x_support_foot_trajectory.size();
+    size = ref_x_support_foot_trajectory.size();
 
     //push_into_gait_packet(gait_packet);
     std::cout<<"length of ref_x_swing_foot_trajectory"<<ref_x_swing_foot_trajectory.size()<<endl;
@@ -6495,285 +6493,228 @@ void Robot::kick(bool isLeftLeg, int kickType, double yaw_angle) {
 
 }
 
-//Kicking Swing Leg Calculation, created by rpf
-void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double target_y, double target_z, double yaw_angle, double kick_pitch,double landing_pitch) {
+void Robot::kick_generator(bool isLeftleg, int kickType, kickPoint target){
 
-    double kick_swing_z = 0.05;
+    //==============================================
+    //Parameter Initialize
+    //==============================================
     int leftFlag = (isLeftLeg == 1)?1:-1;
 
-    //Initial
-    ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, 0);
-    ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, leftFlag * parameters.robot_width/2);
-    ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
-    ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts,0);
-    ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts,0);
-
-    //Move COM
-    ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, 0);
-    ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, leftFlag * parameters.robot_width/2);
-    ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
-    ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
-    ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
-    
     double kick_time;
-    //double kick2lift_time;
-    double kick2dsp_time;
     switch(kickType)
     {
         case KICK_SOFT:
         {
             kick_time = KICK_SWING_TIME_SOFT;
-            kick2dsp_time= KICK_KICK2DSP_TIME_SOFT;
             break;
         }
         case KICK_MEDIUM:
         {
             kick_time = KICK_SWING_TIME_MEDIUM;
-            kick2dsp_time= KICK_KICK2DSP_TIME_MEDIUM;
             break;
         }
         case KICK_STRONG:
         {
             kick_time = KICK_SWING_TIME_STRONG;
-            kick2dsp_time= KICK_KICK2DSP_TIME_STRONG;
             break;
         }
         default:
         {
             kick_time = KICK_SWING_TIME_STRONG;
-            kick2dsp_time= KICK_KICK2DSP_TIME_STRONG;
             break;
         }
-    }   
-        
-    //Parameters
-    //======================================================
-    //kick_parameters -- Parameters For ALL
-    //======================================================
-    kickParameterALL kick_parameters;
-    //x and t_x
-    const int xNum = 7;
-    (kick_parameters.x).num = xNum;
-    double kick_parameters_temp_x[xNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters.x).data = kick_parameters_temp_x;
-    double kick_parameters_temp_t_x[xNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters.x).t_data = kick_parameters_temp_t_x;
-    (kick_parameters.x).offset = 0;
-    
-    //y and t_y
-    const int yNum = 7;
-    (kick_parameters.y).num = yNum;
-    double kick_parameters_temp_y[yNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters.y).data = kick_parameters_temp_y;
-    double kick_parameters_temp_t_y[yNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters.y).t_data = kick_parameters_temp_t_y;
-    (kick_parameters.y).offset = 0;
+    }
 
-    //z and t_z
-    const int zNum = 7;
-    (kick_parameters.z).num = zNum;
-    double kick_parameters_temp_z[zNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters.z).data = kick_parameters_temp_z;
-    double kick_parameters_temp_t_z[zNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters.z).t_data = kick_parameters_temp_t_z;
-    (kick_parameters.z).offset = 0;
+    //default swing parameters
+    const int pointNum = 7;
+    double [10][pointNum] paraSwing = {
 
-    //pitch and t_pitch
-    const int pitchNum = 7;
-    (kick_parameters.pitch).num = pitchNum;
-    double kick_parameters_temp_pitch[pitchNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters.pitch).data = kick_parameters_temp_pitch;
-    double kick_parameters_temp_t_pitch[pitchNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters.pitch).t_data = kick_parameters_temp_t_pitch;
-    (kick_parameters.pitch).offset = 0;
+            {,,,,,,},   //x
+            {,,,,,,},   //x_t
+            {,,,,,,},   //y
+            {,,,,,,},   //y_t
+            {,,,,,,},   //z
+            {,,,,,,},   //z_t
+            {,,,,,,},   //pitch
+            {,,,,,,},   //pitch_t
+            {,,,,,,},   //yaw
+            {,,,,,,}    //yaw_t
+    };
 
-    //yaw and t_yaw
-    const int yawNum = 7;
-    (kick_parameters.yaw).num = yawNum;
-    double kick_parameters_temp_yaw[yawNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters.yaw).data = kick_parameters_temp_yaw;
-    double kick_parameters_temp_t_yaw[yawNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters.yaw).t_data = kick_parameters_temp_t_yaw;
-    (kick_parameters.yaw).offset = 0;
-
-    //======================================================
-    //kick_parameters_KICK -- Parameters For KICK!!!
-    //======================================================
-    kickParameterALL kick_parameters_KICK;
-    //x and t_x
-    const int xNum_KICK = 7;
-    (kick_parameters_KICK.x).num = xNum;
-    double kick_parameters_KICK_temp_x[xNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters_KICK.x).data = kick_parameters_KICK_temp_x;
-    double kick_parameters_KICK_temp_t_x[xNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters_KICK.x).t_data = kick_parameters_KICK_temp_t_x;
-    (kick_parameters_KICK.x).offset = 0;
-    
-    //y and t_y
-    const int yNum_KICK = 7;
-    (kick_parameters_KICK.y).num = yNum_KICK;
-    double kick_parameters_KICK_temp_y[yNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters_KICK.y).data = kick_parameters_KICK_temp_y;
-    double kick_parameters_KICK_temp_t_y[yNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters_KICK.y).t_data = kick_parameters_KICK_temp_t_y;
-    (kick_parameters_KICK.y).offset = 0;
-
-    //z and t_z
-    const int zNum_KICK = 7;
-    (kick_parameters_KICK.z).num = zNum_KICK;
-    double kick_parameters_KICK_temp_z[zNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters_KICK.z).data = kick_parameters_KICK_temp_z;
-    double kick_parameters_KICK_temp_t_z[zNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters_KICK.z).t_data = kick_parameters_KICK_temp_t_z;
-    (kick_parameters_KICK.z).offset = 0;
-
-    //pitch and t_pitch
-    const int pitchNum_KICK = 7;
-    (kick_parameters_KICK.pitch).num = pitchNum_KICK;
-    double kick_parameters_KICK_temp_pitch[pitchNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters_KICK.pitch).data = kick_parameters_KICK_temp_pitch;
-    double kick_parameters_KICK_temp_t_pitch[pitchNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters_KICK.pitch).t_data = kick_parameters_KICK_temp_t_pitch;
-    (kick_parameters_KICK.pitch).offset = 0;
-
-    //yaw and t_yaw
-    const int yawNum_KICK = 7;
-    (kick_parameters_KICK.yaw).num = yawNum_KICK;
-    double kick_parameters_KICK_temp_yaw[yawNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters_KICK.yaw).data = kick_parameters_KICK_temp_yaw;
-    double kick_parameters_KICK_temp_t_yaw[yawNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters_KICK.yaw).t_data = kick_parameters_KICK_temp_t_yaw;
-    (kick_parameters_KICK.yaw).offset = 0;
-
-    //======================================================
-    //kick_parameters_DSP2END -- Parameters For LAST STEP!!!
-    //======================================================
-    kickParameterALL kick_parameters_DSP2END;
-    //x and t_x
-    const int xNum_DSP2END = 7;
-    (kick_parameters_DSP2END.x).num = xNum;
-    double kick_parameters_DSP2END_temp_x[xNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters_DSP2END.x).data = kick_parameters_DSP2END_temp_x;
-    double kick_parameters_DSP2END_temp_t_x[xNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters_DSP2END.x).t_data = kick_parameters_DSP2END_temp_t_x;
-    (kick_parameters_DSP2END.x).offset = 0;
-
-    //y and t_y
-    const int yNum_DSP2END = 7;
-    (kick_parameters_DSP2END.y).num = yNum_DSP2END;
-    double kick_parameters_DSP2END_temp_y[yNum_DSP2END] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters_DSP2END.y).data = kick_parameters_DSP2END_temp_y;
-    double kick_parameters_DSP2END_temp_t_y[yNum_DSP2END] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters_DSP2END.y).t_data = kick_parameters_DSP2END_temp_t_y;
-    (kick_parameters_DSP2END.y).offset = 0;
-
-    //z and t_z
-    const int zNum_DSP2END = 7;
-    (kick_parameters_DSP2END.z).num = zNum_DSP2END;
-    double kick_parameters_DSP2END_temp_z[zNum_DSP2END] = {0,0.5,1,1,0.7,0.13,0};
-    (kick_parameters_DSP2END.z).data = kick_parameters_DSP2END_temp_z;
-    double kick_parameters_DSP2END_temp_t_z[zNum_DSP2END] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters_DSP2END.z).t_data = kick_parameters_DSP2END_temp_t_z;
-    (kick_parameters_DSP2END.z).offset = LIFT_HEIGHT;
-    
-
-    //pitch and t_pitch
-    const int pitchNum_DSP2END = 7;
-    (kick_parameters_DSP2END.pitch).num = pitchNum_DSP2END;
-    double kick_parameters_DSP2END_temp_pitch[pitchNum_DSP2END] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters_DSP2END.pitch).data = kick_parameters_DSP2END_temp_pitch;
-    double kick_parameters_DSP2END_temp_t_pitch[pitchNum_DSP2END] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters_DSP2END.pitch).t_data = kick_parameters_DSP2END_temp_t_pitch;
-    (kick_parameters_DSP2END.pitch).offset = 0;
-
-    //yaw and t_yaw
-    const int yawNum_DSP2END = 7;
-    (kick_parameters_DSP2END.yaw).num = yawNum_DSP2END;
-    double kick_parameters_DSP2END_temp_yaw[yawNum_DSP2END] = {0,0.05,0.1,0.4,0.8,0.95,1};
-    (kick_parameters_DSP2END.yaw).data = kick_parameters_DSP2END_temp_yaw;
-    double kick_parameters_DSP2END_temp_t_yaw[yawNum_DSP2END] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
-    (kick_parameters_DSP2END.yaw).t_data = kick_parameters_DSP2END_temp_t_yaw;
-    (kick_parameters_DSP2END.yaw).offset = 0;
-
-    //======================================================
-    //KEY Points
-    //======================================================
-    kickPoint init;
-    init.x = 0;
-    init.y = leftFlag * parameters.robot_width/2;
-    init.z = parameters.robot_ankle_to_foot;
-    init.pitch = 0;
-    init.yaw = 0;
-    
-    kickPoint lift;
-    lift.x = LIFT_X_BACK;
-    lift.y = leftFlag * parameters.robot_width/2;
-    lift.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
-    lift.pitch = 0;
-    lift.yaw = 0;
-    
-    kickPoint kick;
-    kick.x = target_x;
-    kick.y = leftFlag * parameters.robot_width/2;
-    kick.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT +kick_swing_z;
-    kick.pitch = kick_pitch;
-    kick.yaw = 0;
-
-    kickPoint dsp;
-    dsp.x = DSP_KICKLEG_X;
-    dsp.y = leftFlag * parameters.robot_width/2;
-    dsp.z = parameters.robot_ankle_to_foot;
-    dsp.pitch = 0;
-    dsp.yaw = 0;
-    
-    kickPoint dsp2end;
-    dsp2end.x = DSP_KICKLEG_X / 2;
-    dsp2end.y = -leftFlag * parameters.robot_width/2;
-    dsp2end.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
-    dsp2end.pitch = 0;
-    dsp2end.yaw = 0;
-
-    kickPoint end;
-    end.x = DSP_KICKLEG_X;
-    end.y = -leftFlag * parameters.robot_width/2;
-    end.z = parameters.robot_ankle_to_foot;
-    end.pitch = 0;
-    end.yaw = 0;
-
-    //======================================================
+    //==============================================
     //Execute
-    //======================================================
-    Robot::kick_swing_trajectory_generator(&init, &lift, &kick_parameters, KICK_LIFT_TIME);
-    Robot::kick_swing_trajectory_generator(&lift, &kick, &kick_parameters_KICK, kick_time);
-    Robot::kick_swing_trajectory_generator(&kick, &dsp,  &kick_parameters, kick2dsp_time);
+    //==============================================
+    //init
+    {
+        double time = ;
+        //swing
+        {
+            kickPoint end;
+            end.x =;
+            end.y =;
+            end.z =;
+            end.pitch = ;
+            end.yaw = ;
+            kick_swing_generator(end, time, paraSwing, pointNum);
+        }
+        //support
+        {
+            kickPoint end;
+            end.x =;
+            end.y =;
+            end.z =;
+            end.pitch = ;
+            end.yaw = ;
+            kick_support_generator(end, time);
+        }
+        //zmp
+        {
+            kickPoint end;
+            end.x =;
+            end.y =;
+            end.z =;
+            end.pitch =;
+            end.yaw =;
+            kick_zmp_generator(end, time);
+        }
+    }
 
-    
-    //dsp
-    ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, dsp.x);
-    ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, dsp.y);
-    ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, dsp.z);
-    ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, dsp.pitch);
-    ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, dsp.yaw);
+    //movCOM
+    {
+        double time = ;
+        //swing
+        {
+            kickPoint end;
+            end.x =;
+            end.y =;
+            end.z =;
+            end.pitch = ;
+            end.yaw = ;
+            kick_swing_generator(end, time, paraSwing, pointNum);
+        }
+        //support
+        {
+            kickPoint end;
+            end.x =;
+            end.y =;
+            end.z =;
+            end.pitch = ;
+            end.yaw = ;
+            kick_support_generator(end, time);
+        }
+        //zmp
+        {
+            kickPoint end;
+            end.x =;
+            end.y =;
+            end.z =;
+            end.pitch =;
+            end.yaw =;
+            kick_zmp_generator(end, time);
+        }
+    }
 
-    // change leg
-    dsp.x = 0;
-    dsp.y = -leftFlag * parameters.robot_width/2;
-    dsp.z = parameters.robot_ankle_to_foot;
-    dsp.pitch = 0;
-    dsp.yaw = 0;
+    //lift
+    {
+        double time = ;
+        //swing
+        {
+            kickPoint end;
+            end.x =;
+            end.y =;
+            end.z =;
+            end.pitch = ;
+            end.yaw = ;
+            kick_swing_generator(end, time, paraSwing, pointNum);
+        }
+        //support
+        {
+            kickPoint end;
+            end.x =;
+            end.y =;
+            end.z =;
+            end.pitch = ;
+            end.yaw = ;
+            kick_support_generator(end, time);
+        }
+        //zmp
+        {
+            kickPoint end;
+            end.x =;
+            end.y =;
+            end.z =;
+            end.pitch =;
+            end.yaw =;
+            kick_zmp_generator(end, time);
+        }
+    }
 
-    //move a step
-    Robot::kick_swing_trajectory_generator(&dsp, &end,  &kick_parameters_DSP2END, KICK_LAST_STEP_TIME);
-    
-    //move CoM back to middle
-     ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, DSP_KICKLEG_X);
-     ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,(leftFlag) * -parameters.robot_width/2);
-     ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
-     ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
-     ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
+    //kick
+    {
+        double time = ;
+        //swing
+        {
+            //specialize the kick swing parameter
+            double [10][pointNum] paraSwing = {
+
+                    {,,,,,,},   //x
+                    {,,,,,,},   //x_t
+                    {,,,,,,},   //y
+                    {,,,,,,},   //y_t
+                    {,,,,,,},   //z
+                    {,,,,,,},   //z_t
+                    {,,,,,,},   //pitch
+                    {,,,,,,},   //pitch_t
+                    {,,,,,,},   //yaw
+                    {,,,,,,}    //yaw_t
+            };
+
+            kickPoint end;
+            end.x =;
+            end.y =;
+            end.z =;
+            end.pitch = ;
+            end.yaw = ;
+            kick_swing_generator(end, time, );
+        }
+        //support
+        {
+            kickPoint end;
+            end.x =;
+            end.y =;
+            end.z =;
+            end.pitch = ;
+            end.yaw = ;
+            kick_support_generator(end, time);
+        }
+        //zmp
+        {
+            kickPoint end;
+            end.x =;
+            end.y =;
+            end.z =;
+            end.pitch =;
+            end.yaw =;
+            kick_zmp_generator(end, time);
+        }
+    }
 }
 
-//The Spline Function, created by liuyuezhang 2017-7-18
+void Robot::kick_swing_generator(kickPoint end, double time, double** parameter, int pointNum) {
+    kickPoint offset;
+    offset.x = end.x - ref_x_swing_foot_trajectory.back();
+    offset.y = end.y - ref_y_swing_foot_trajectory.back();
+    offset.z = end.z - ref_z_swing_foot_trajectory.back();
+    offset.pitch = end.pitch - ref_theta_swing_foot_trajectory.back();
+    offset.yaw = end.yaw - ref_psi_swing_foot_trajectory.back();
+
+    kick_swing_trajectory_generator_one_dimension(1, ref_x_swing_foot_trajectory.back(), offset.x, pointNum, parameter + 0, parameter + 1, time);
+    kick_swing_trajectory_generator_one_dimension(2, ref_y_swing_foot_trajectory.back(), offset.y, pointNum, parameter + 2, parameter + 3, time);
+    kick_swing_trajectory_generator_one_dimension(3, ref_z_swing_foot_trajectory.back(), offset.z, pointNum, parameter + 4, parameter + 5, time);
+    kick_swing_trajectory_generator_one_dimension(4, ref_theta_swing_foot_trajectory.back(), offset.pitch, pointNum, parameter + 6, parameter + 7, time);
+    kick_swing_trajectory_generator_one_dimension(5, ref_psi_swing_foot_trajectory.back(), offset.yaw, pointNum, parameter + 8, parameter + 9, time);
+}
+
 void Robot::kick_swing_trajectory_generator_one_dimension(int mode, double startX, double offsetX, int pointNum, double* parametersX, double* parametersT, double time) {
     //Data, T Spline
     double ResX[pointNum];
@@ -6827,85 +6768,21 @@ void Robot::kick_swing_trajectory_generator_one_dimension(int mode, double start
     }
 }
 
-//Kick Swing Trajectory Generator, created by liuyuezhang 2017-7-16, modified by liuyuezhang 2017-7-18
-//start: startPoint, end: endPoint, parameters: spice parameters, time: kick time
-void Robot::kick_swing_trajectory_generator(kickPoint* start, kickPoint* end, kickParameterALL* kick_parameters, double time) {
-    kickPoint offset;
-    offset.x = end->x - start->x;
-    offset.y = end->y - start->y;
-    offset.z = end->z - start->z;
-    offset.pitch = end->pitch - start->pitch;
-    offset.yaw = end->yaw - start->yaw;
-    std::cout << "offset = " << (kick_parameters -> z).offset << std::endl;
-    if((kick_parameters -> z).offset != 0){
-        offset.z = (kick_parameters -> z).offset;
-        std::cout << "offset.z = " << offset.z << std::endl;
-    }
+void Robot::kick_support_generator(kickPoint end, double time){
 
-    kick_swing_trajectory_generator_one_dimension(1, start->x, offset.x, (kick_parameters->x).num, (kick_parameters->x).data, (kick_parameters->x).t_data, time);
-    kick_swing_trajectory_generator_one_dimension(2, start->y, offset.y, (kick_parameters->y).num, (kick_parameters->y).data, (kick_parameters->y).t_data, time);
-    kick_swing_trajectory_generator_one_dimension(3, start->z, offset.z, (kick_parameters->z).num, (kick_parameters->z).data, (kick_parameters->z).t_data, time);
-    kick_swing_trajectory_generator_one_dimension(4, start->pitch, offset.pitch, (kick_parameters->pitch).num, (kick_parameters->pitch).data, (kick_parameters->pitch).t_data, time);
-    kick_swing_trajectory_generator_one_dimension(5, start->yaw, offset.yaw, (kick_parameters->yaw).num, (kick_parameters->yaw).data, (kick_parameters->yaw).t_data, time);
+    ref_x_support_foot_trajectory.insert(ref_x_support_foot_trajectory.end(),time/parameters.Ts), end.x);
+    ref_y_support_foot_trajectory.insert(ref_y_support_foot_trajectory.end(),time/parameters.Ts), end.y;
+    ref_z_support_foot_trajectory.insert(ref_z_support_foot_trajectory.end(),time/parameters.Ts), end.z);
+    ref_psi_support_foot_trajectory.insert(ref_psi_support_foot_trajectory.end(),time/parameters.Ts), end.yaw);
 }
 
-//Kicking Support Leg Calculation, created by lhy
-void Robot::kick_calc_support(bool isLeftLeg, int kickType) {
-    
-    int leftFlag = (isLeftLeg == 1)?1:-1;
-    double kick_time;
-    double kick2dsp_time;
-    switch(kickType)
-    {
-        case KICK_SOFT:
-        {
-            kick_time = KICK_SWING_TIME_SOFT;
-            kick2dsp_time= KICK_KICK2DSP_TIME_SOFT;
-            break;
-        }
-        case KICK_MEDIUM:
-        {
-            kick_time = KICK_SWING_TIME_MEDIUM;
-            kick2dsp_time= KICK_KICK2DSP_TIME_MEDIUM;
-            break;
-        }
-        case KICK_STRONG:
-        {
-            kick_time = KICK_SWING_TIME_STRONG;
-            kick2dsp_time= KICK_KICK2DSP_TIME_STRONG;
-            break;
-        }
-        default:
-        {
-            kick_time = KICK_SWING_TIME_STRONG;
-            kick2dsp_time= KICK_KICK2DSP_TIME_STRONG;
-            break;
-        }
-    }
-
-    //init to dsp
-    ref_x_support_foot_trajectory.insert(ref_x_support_foot_trajectory.end(),ceil((KICK_INIT_TIME + KICK_COMTRANS_TIME + KICK_LIFT_TIME+ kick_time + kick2dsp_time + KICK_DSP_TIME)/parameters.Ts), 0);
-    ref_y_support_foot_trajectory.insert(ref_y_support_foot_trajectory.end(),ceil((KICK_INIT_TIME + KICK_COMTRANS_TIME + KICK_LIFT_TIME+ kick_time + kick2dsp_time + KICK_DSP_TIME)/parameters.Ts),-leftFlag * (parameters.robot_width/2));
-    ref_z_support_foot_trajectory.insert(ref_z_support_foot_trajectory.end(),ceil((KICK_INIT_TIME + KICK_COMTRANS_TIME + KICK_LIFT_TIME+ kick_time + kick2dsp_time + KICK_DSP_TIME)/parameters.Ts),parameters.robot_ankle_to_foot);
-    ref_psi_support_foot_trajectory.insert(ref_psi_support_foot_trajectory.end(),ceil((KICK_INIT_TIME + KICK_COMTRANS_TIME + KICK_LIFT_TIME+ kick_time + kick2dsp_time + KICK_DSP_TIME)/parameters.Ts),0);
-    
-     //last step + move com to middle
-     ref_x_support_foot_trajectory.insert(ref_x_support_foot_trajectory.end(),(KICK_LAST_STEP_TIME+ KICK_COMTRANS_TIME)/parameters.Ts, DSP_KICKLEG_X);
-     ref_y_support_foot_trajectory.insert(ref_y_support_foot_trajectory.end(),(KICK_LAST_STEP_TIME+ KICK_COMTRANS_TIME)/parameters.Ts, leftFlag * parameters.robot_width/2); //switch to left leg is support leg
-     ref_z_support_foot_trajectory.insert(ref_z_support_foot_trajectory.end(),(KICK_LAST_STEP_TIME+ KICK_COMTRANS_TIME)/parameters.Ts,parameters.robot_ankle_to_foot);
-     ref_psi_support_foot_trajectory.insert(ref_psi_support_foot_trajectory.end(),(KICK_LAST_STEP_TIME+ KICK_COMTRANS_TIME)/parameters.Ts,0);
-}
-
-void Robot::kick_zmp_trajectory_generator(kickPoint* end, double time){
+void Robot::kick_zmp_generator(kickPoint end, double time){
 
     double x1 = ref_x_zmp_trajectory.back();
     double y1 = ref_y_zmp_trajectory.back();
 
-    double x2 = end->x;
-    double y2 = end->y;
-
-    std::cout<<"*******************************************FUCK"<<std::endl;
-    std::cout<<"starty"<<y1<<"endy"<<y2<<std::endl;
+    double x2 = end.x;
+    double y2 = end.y;
 
     //Special Case: Wait
     if(x2 == ref_x_zmp_trajectory.back() && y2 == ref_x_zmp_trajectory.back()){
@@ -6919,7 +6796,7 @@ void Robot::kick_zmp_trajectory_generator(kickPoint* end, double time){
     double offsetY = y2 - y1;
     double timeNum = floor(time / parameters.Ts); //ceil is important: for double
 
-    for (int k = 0; k < timeNum; k++){
+    for (int k = 1; k <= timeNum; k++){
         double x = x1 + offsetX * k / timeNum;
         double y = y1 + offsetY * k / timeNum;
         ref_x_zmp_trajectory.push_back(x);
@@ -6927,93 +6804,239 @@ void Robot::kick_zmp_trajectory_generator(kickPoint* end, double time){
     }
 }
 
-//Kicking ZMP Calculation, created by csj, shen me wan yi...??
-void Robot::kick_calc_zmp(bool isLeftLeg, int kickType) {
-    
+//Kicking Swing Leg Calculation, created by rpf
+void Robot::kick_calc_swing(bool isLeftLeg, int kickType, double target_x,double target_y, double target_z, double yaw_angle, double kick_pitch,double landing_pitch) {
+
+    double kick_swing_z = 0.05;
     int leftFlag = (isLeftLeg == 1)?1:-1;
-    double kick_time;
-    double kick2dsp_time;
 
-    //double kick2lift_time;
-    switch(kickType)
-    {
-        case KICK_SOFT:
-        {
-            kick_time = KICK_SWING_TIME_SOFT;
-            kick2dsp_time =  KICK_KICK2DSP_TIME_SOFT;
-            
-            break;
-        }
-        case KICK_MEDIUM:
-        {
-            kick_time = KICK_SWING_TIME_MEDIUM;
-            kick2dsp_time = KICK_KICK2DSP_TIME_MEDIUM;
-            break;
-        }
-        case KICK_STRONG:
-        {
-            kick_time = KICK_SWING_TIME_STRONG;
-            kick2dsp_time = KICK_KICK2DSP_TIME_STRONG;
-            break;
-        }
-        default:
-        {
-            kick_time = KICK_SWING_TIME_STRONG;
-            kick2dsp_time = KICK_KICK2DSP_TIME_STRONG;
-            break;
-        }
-    }
+    //Initial
+    ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, 0);
+    ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, leftFlag * parameters.robot_width/2);
+    ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
+    ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts,0);
+    ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_INIT_TIME/parameters.Ts,0);
 
-    //====================
-    //KEY Points, END POINT NAME == PROCESS NAME
-    //====================
+    //Move COM
+    ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, 0);
+    ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, leftFlag * parameters.robot_width/2);
+    ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
+    ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
+    ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
+    
+
+        
+    //Parameters
+    //======================================================
+    //kick_parameters -- Parameters For ALL
+    //======================================================
+    kickParameterALL kick_parameters;
+    //x and t_x
+    const int xNum = 7;
+    (kick_parameters.x).num = xNum;
+    double kick_parameters_temp_x[xNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters.x).data = kick_parameters_temp_x;
+    double kick_parameters_temp_t_x[xNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters.x).t_data = kick_parameters_temp_t_x;
+    
+    //y and t_y
+    const int yNum = 7;
+    (kick_parameters.y).num = yNum;
+    double kick_parameters_temp_y[yNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters.y).data = kick_parameters_temp_y;
+    double kick_parameters_temp_t_y[yNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters.y).t_data = kick_parameters_temp_t_y;
+
+    //z and t_z
+    const int zNum = 7;
+    (kick_parameters.z).num = zNum;
+    double kick_parameters_temp_z[zNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters.z).data = kick_parameters_temp_z;
+    double kick_parameters_temp_t_z[zNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters.z).t_data = kick_parameters_temp_t_z;
+
+    //pitch and t_pitch
+    const int pitchNum = 7;
+    (kick_parameters.pitch).num = pitchNum;
+    double kick_parameters_temp_pitch[pitchNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters.pitch).data = kick_parameters_temp_pitch;
+    double kick_parameters_temp_t_pitch[pitchNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters.pitch).t_data = kick_parameters_temp_t_pitch;
+
+    //yaw and t_yaw
+    const int yawNum = 7;
+    (kick_parameters.yaw).num = yawNum;
+    double kick_parameters_temp_yaw[yawNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters.yaw).data = kick_parameters_temp_yaw;
+    double kick_parameters_temp_t_yaw[yawNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters.yaw).t_data = kick_parameters_temp_t_yaw;
+
+    //======================================================
+    //kick_parameters_KICK -- Parameters For KICK!!!
+    //======================================================
+    kickParameterALL kick_parameters_KICK;
+    //x and t_x
+    const int xNum_KICK = 7;
+    (kick_parameters_KICK.x).num = xNum;
+    double kick_parameters_KICK_temp_x[xNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_KICK.x).data = kick_parameters_KICK_temp_x;
+    double kick_parameters_KICK_temp_t_x[xNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_KICK.x).t_data = kick_parameters_KICK_temp_t_x;
+    
+    //y and t_y
+    const int yNum_KICK = 7;
+    (kick_parameters_KICK.y).num = yNum_KICK;
+    double kick_parameters_KICK_temp_y[yNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_KICK.y).data = kick_parameters_KICK_temp_y;
+    double kick_parameters_KICK_temp_t_y[yNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_KICK.y).t_data = kick_parameters_KICK_temp_t_y;
+
+    //z and t_z
+    const int zNum_KICK = 7;
+    (kick_parameters_KICK.z).num = zNum_KICK;
+    double kick_parameters_KICK_temp_z[zNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_KICK.z).data = kick_parameters_KICK_temp_z;
+    double kick_parameters_KICK_temp_t_z[zNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_KICK.z).t_data = kick_parameters_KICK_temp_t_z;
+
+    //pitch and t_pitch
+    const int pitchNum_KICK = 7;
+    (kick_parameters_KICK.pitch).num = pitchNum_KICK;
+    double kick_parameters_KICK_temp_pitch[pitchNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_KICK.pitch).data = kick_parameters_KICK_temp_pitch;
+    double kick_parameters_KICK_temp_t_pitch[pitchNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_KICK.pitch).t_data = kick_parameters_KICK_temp_t_pitch;
+
+    //yaw and t_yaw
+    const int yawNum_KICK = 7;
+    (kick_parameters_KICK.yaw).num = yawNum_KICK;
+    double kick_parameters_KICK_temp_yaw[yawNum_KICK] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_KICK.yaw).data = kick_parameters_KICK_temp_yaw;
+    double kick_parameters_KICK_temp_t_yaw[yawNum_KICK] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_KICK.yaw).t_data = kick_parameters_KICK_temp_t_yaw;
+
+    //======================================================
+    //kick_parameters_DSP2END -- Parameters For LAST STEP!!!
+    //======================================================
+    kickParameterALL kick_parameters_DSP2END;
+    //x and t_x
+    const int xNum_DSP2END = 7;
+    (kick_parameters_DSP2END.x).num = xNum;
+    double kick_parameters_DSP2END_temp_x[xNum] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_DSP2END.x).data = kick_parameters_DSP2END_temp_x;
+    double kick_parameters_DSP2END_temp_t_x[xNum] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_DSP2END.x).t_data = kick_parameters_DSP2END_temp_t_x;
+
+    //y and t_y
+    const int yNum_DSP2END = 7;
+    (kick_parameters_DSP2END.y).num = yNum_DSP2END;
+    double kick_parameters_DSP2END_temp_y[yNum_DSP2END] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_DSP2END.y).data = kick_parameters_DSP2END_temp_y;
+    double kick_parameters_DSP2END_temp_t_y[yNum_DSP2END] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_DSP2END.y).t_data = kick_parameters_DSP2END_temp_t_y;
+
+    //z and t_z
+    const int zNum_DSP2END = 7;
+    (kick_parameters_DSP2END.z).num = zNum_DSP2END;
+    double kick_parameters_DSP2END_temp_z[zNum_DSP2END] = {0,0.5,1,1,0.7,0.13,0};
+    (kick_parameters_DSP2END.z).data = kick_parameters_DSP2END_temp_z;
+    double kick_parameters_DSP2END_temp_t_z[zNum_DSP2END] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_DSP2END.z).t_data = kick_parameters_DSP2END_temp_t_z;
+    
+
+    //pitch and t_pitch
+    const int pitchNum_DSP2END = 7;
+    (kick_parameters_DSP2END.pitch).num = pitchNum_DSP2END;
+    double kick_parameters_DSP2END_temp_pitch[pitchNum_DSP2END] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_DSP2END.pitch).data = kick_parameters_DSP2END_temp_pitch;
+    double kick_parameters_DSP2END_temp_t_pitch[pitchNum_DSP2END] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_DSP2END.pitch).t_data = kick_parameters_DSP2END_temp_t_pitch;
+
+    //yaw and t_yaw
+    const int yawNum_DSP2END = 7;
+    (kick_parameters_DSP2END.yaw).num = yawNum_DSP2END;
+    double kick_parameters_DSP2END_temp_yaw[yawNum_DSP2END] = {0,0.05,0.1,0.4,0.8,0.95,1};
+    (kick_parameters_DSP2END.yaw).data = kick_parameters_DSP2END_temp_yaw;
+    double kick_parameters_DSP2END_temp_t_yaw[yawNum_DSP2END] = {0, 1.0/6, 1.0/6*2, 1.0/6*3, 1.0/6*4, 1.0/6*5, 1.0};
+    (kick_parameters_DSP2END.yaw).t_data = kick_parameters_DSP2END_temp_t_yaw;
+
+    //======================================================
+    //KEY Points
+    //======================================================
     kickPoint init;
-    init.x = parameters.zmp_offset_x;
-    init.y = 0;
-
-    kickPoint movCom;
-    movCom.x = parameters.zmp_offset_x;
-    movCom.y = leftFlag * -(parameters.robot_width/2 + KICK_INCREMENT);
-
+    init.x = 0;
+    init.y = leftFlag * parameters.robot_width/2;
+    init.z = parameters.robot_ankle_to_foot;
+    init.pitch = 0;
+    init.yaw = 0;
+    
+    kickPoint lift;
+    lift.x = LIFT_X_BACK;
+    lift.y = leftFlag * parameters.robot_width/2;
+    lift.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
+    lift.pitch = 0;
+    lift.yaw = 0;
+    
     kickPoint kick;
-    kick.x = parameters.zmp_offset_x;
-    kick.y = leftFlag * -(parameters.robot_width/2 + KICK_INCREMENT);
+    kick.x = target_x;
+    kick.y = leftFlag * parameters.robot_width/2;
+    kick.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT +kick_swing_z;
+    kick.pitch = kick_pitch;
+    kick.yaw = 0;
 
-    kickPoint down;
-    down.x = 0;
-    down.y = leftFlag * -(parameters.robot_width/2);
-
-    kickPoint dsp;
-    dsp.x = DSP_KICKLEG_X + parameters.zmp_offset_x;
-    dsp.y = leftFlag * (parameters.robot_width/2 + KICK_INCREMENT_DSP);
-
-    kickPoint lastStep;
-    lastStep.x = DSP_KICKLEG_X + parameters.zmp_offset_x;
-    lastStep.y = leftFlag * (parameters.robot_width/2 + KICK_INCREMENT_DSP);
-
-    kickPoint movBack;
-    movBack.x = DSP_KICKLEG_X + parameters.zmp_offset_x;
-    movBack.y = 0;
+//    kickPoint dsp;
+//    dsp.x = DSP_KICKLEG_X;
+//    dsp.y = leftFlag * parameters.robot_width/2;
+//    dsp.z = parameters.robot_ankle_to_foot;
+//    dsp.pitch = 0;
+//    dsp.yaw = 0;
+//
+//    kickPoint dsp2end;
+//    dsp2end.x = DSP_KICKLEG_X / 2;
+//    dsp2end.y = -leftFlag * parameters.robot_width/2;
+//    dsp2end.z = parameters.robot_ankle_to_foot + LIFT_HEIGHT;
+//    dsp2end.pitch = 0;
+//    dsp2end.yaw = 0;
+//
+//    kickPoint end;
+//    end.x = DSP_KICKLEG_X;
+//    end.y = -leftFlag * parameters.robot_width/2;
+//    end.z = parameters.robot_ankle_to_foot;
+//    end.pitch = 0;
+//    end.yaw = 0;
 
     //======================================================
     //Execute
     //======================================================
-    //init
-    kick_zmp_trajectory_generator(&init, KICK_INIT_TIME);
-    //movCom
-    kick_zmp_trajectory_generator(&movCom, KICK_COMTRANS_TIME);
-    //lift + kick
-    kick_zmp_trajectory_generator(&kick, KICK_LIFT_TIME + kick_time);
-    //down
-    kick_zmp_trajectory_generator(&down, kick2dsp_time * 1.0);
-    kick_zmp_trajectory_generator(&down, kick2dsp_time * 0.0);//wait
-    //dsp
-    kick_zmp_trajectory_generator(&dsp, KICK_DSP_TIME * 0.8);
-    kick_zmp_trajectory_generator(&dsp, KICK_DSP_TIME * 0.2);//wait
-    //lastStep
-    kick_zmp_trajectory_generator(&lastStep, KICK_LAST_STEP_TIME);
-    //movBack
-    kick_zmp_trajectory_generator(&movBack, KICK_COMTRANS_TIME);
+    Robot::kick_swing_trajectory_generator(&lift, KICK_LIFT_TIME, &kick_parameters);
+    Robot::kick_swing_trajectory_generator(&kick, kick_time, &kick_parameters_KICK);
+
+//    Robot::kick_swing_trajectory_generator(&dsp,  &kick_parameters, kick2dsp_time);
+//
+//
+//    //dsp
+//    ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, dsp.x);
+//    ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, dsp.y);
+//    ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, dsp.z);
+//    ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, dsp.pitch);
+//    ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_DSP_TIME/parameters.Ts, dsp.yaw);
+//
+//    // change leg
+//    dsp.x = 0;
+//    dsp.y = -leftFlag * parameters.robot_width/2;
+//    dsp.z = parameters.robot_ankle_to_foot;
+//    dsp.pitch = 0;
+//    dsp.yaw = 0;
+//
+//    //move a step
+//    Robot::kick_swing_trajectory_generator(&dsp, &end,  &kick_parameters_DSP2END, KICK_LAST_STEP_TIME);
+//
+//    //move CoM back to middle
+//     ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, DSP_KICKLEG_X);
+//     ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,(leftFlag) * -parameters.robot_width/2);
+//     ref_z_swing_foot_trajectory.insert(ref_z_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts, parameters.robot_ankle_to_foot);
+//     ref_theta_swing_foot_trajectory.insert(ref_theta_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
+//     ref_psi_swing_foot_trajectory.insert(ref_psi_swing_foot_trajectory.end(),KICK_COMTRANS_TIME/parameters.Ts,0);
 }
 
 /*******************************Kicking Part END*******************************/
