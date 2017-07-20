@@ -7000,6 +7000,8 @@ void Robot::kick_zmp_generator(kickPoint end, double time){
         double y = y1 + offsetY * k / timeNum;
         ref_x_zmp_trajectory.push_back(x);
         ref_y_zmp_trajectory.push_back(y);
+        std::cout<<"FUCK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+        std::cout<<y<<std::endl;
     }
 }
 /*******************************Kicking Part END*******************************/
