@@ -31,18 +31,6 @@
 // #include "gyro_info/gyro_euler.h"
 
 	/***********************Kick Part START*************************/
-//COMTRANS Y INCREMENT
-#define KICK_INCREMENT 0.053
-#define KICK_INCREMENT_DSP 0.045
-//LIFT
-#define LIFT_HEIGHT 0.05
-#define LIFT_X_INCREMENT -0.05
-#define LIFT_Y_INCREMENT -0.03
-//KICK
-#define KICK_DISTANCE 0.2
-#define DSP_KICKLEG_X 0.17
-#define KICK_HEIGHT 0.05
-
 //Kick Time Parameters
 #define KICK_INIT_TIME 1.0
 #define KICK_COMTRANS_TIME 2.0
@@ -51,7 +39,9 @@
 #define KICK_SWING_TIME_MEDIUM 0.7  //about 2.3m
 #define KICK_SWING_TIME_STRONG 0.4  //about 5.5m
 
-// #define KICK_LIFT2INIT_TIME 2.0
+// #define KICK_SOFT_VEL 0.2
+// #define KICK_MEDIUM_VEL 0.5
+// #define KICK_STRONG_VEL 0.5
 
 #define KICK_KICK2DSP_TIME_SOFT 1.5
 #define KICK_KICK2DSP_TIME_MEDIUM 1.5
@@ -67,6 +57,7 @@
 #define KICK_SOFT 0
 #define KICK_MEDIUM 1
 #define KICK_STRONG 2
+#define KICK_HIGHKICK 3
 
 struct kickPoint
 {
@@ -225,7 +216,7 @@ public:
 				double * swing_x_last, double * swing_y_last, double * swing_z_last, double * swing_theta_last, double * swing_psi_last,
 				double * x_zmp_last, double * y_zmp_last);
 		//KICK	
-			void kick(bool isLeftLeg, int kickType, double yaw_angle = 0.0);
+			void kick(int kickType, double camera_x, double camera_y, double yaw = 0.0);
 
 		private:
 			std::vector<double> leftIsSupportLeg_vector;
@@ -470,9 +461,11 @@ public:
 		int closest(std::vector<double>  vec, double value);
 	
 	//kick
+		void cam2kick(double camera_x, double camera_y, double &r_kick_x, double &r_kick_y);
 		void kick_force_insert(kickPoint swing, kickPoint support, kickPoint zmp, double time);
 		void kick_wait(double time);
-		void kick_generator(bool isLeftLeg, int kickType, kickPoint target);
+
+		void kick_generator(int kickType, kickPoint input);
 		void kick_swing_generator(kickPoint end, double time, double parameter[][7], const int pointNum);
 		void kick_swing_trajectory_generator_one_dimension(int mode, double startX, double offsetX, int pointNum, double* parametersX, double* parametersT, double time);
 		void kick_support_generator(kickPoint end, double time);
