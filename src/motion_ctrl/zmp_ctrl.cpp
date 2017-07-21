@@ -6473,9 +6473,10 @@ void Robot::kick(int kickType, double camera_x, double camera_y, double yaw){
     kickPoint input;
     cam2kick(camera_x, camera_y, input.x, input.y);
 
-    // input.x = 0.2;
-    // input.y = -0.03;
-    input.yaw = yaw;
+
+    input.x = 0.33;
+    input.y = 0.1;
+    input.yaw = pi/18;
     
     kick_generator(kickType, input);
 
@@ -6487,10 +6488,10 @@ void Robot::kick(int kickType, double camera_x, double camera_y, double yaw){
 
 }
 
-//Camera Cordinate to Kick Cordinate
+//Camera Cordinate to Kick Cordinate ,need to change!!!!!!!!!
 void Robot::cam2kick(double camera_x, double camera_y, double &r_kick_x, double &r_kick_y){
-    r_kick_x = -0.2142 * camera_y + 99.016;
-    r_kick_y = -0.216 * camera_x + 65.793;
+    r_kick_x = (-0.2142 * camera_y + 112.016)/100.0;
+    r_kick_y = (-0.216 * camera_x + 65.793)/100.0;
 }
 
 //Force Insert Data: for set start data & uncontinious condition
@@ -6533,6 +6534,8 @@ void Robot::kick_generator(int kickType, kickPoint input){
     //=============================================
     //Parameters Init
     //=============================================
+    
+    //target: the ball in the foot cordinate
     kickPoint target;
     target.x = input.x;
     if(input.y >= 0.04 || input.y <= -0.04){
@@ -6544,20 +6547,23 @@ void Robot::kick_generator(int kickType, kickPoint input){
     else if(input.y > -0.04 && input.y < 0){
         target.y = -0.03;
     }
-    //target.yaw input.yaw?????????
-    int leftFlag = (target.y>0)?1:-1;
+    target.yaw = input.yaw;
+    int leftFlag = (target.y>0)?1:-1; // need to change: an zhao lift pan ding
     
     //LIFT
-    double lift_x = -0.05 + (target.x - 0.2);//keep the kick distance == 0.25
-    double lift_y = target.y;
+    double kick_distance = 0.25;
+    double lift_x = target.x - (kick_distance + parameters.foot_length_front) * cos(target.yaw);
+    double lift_y = target.y - (kick_distance + parameters.foot_length_front) * sin(target.yaw);
     double lift_height = 0.04;
     double lift_pitch = 0;
+    double lift_yaw = target.yaw;
 
     //KICK
-    double kick_x = target.x;
-    double kick_y = target.y;
+    double kick_x = target.x - parameters.foot_length_front * cos(target.yaw);
+    double kick_y = target.y - parameters.foot_length_front * sin(target.yaw);
     double kick_height = 0.05;
     double kick_pitch = -pi / 10;
+    double kick_yaw = target.yaw;
 
     //DSP & MOVE_A_STEP_DOWN
     double landing_buffer = 0.01;
@@ -6691,7 +6697,7 @@ void Robot::kick_generator(int kickType, kickPoint input){
             end.y = lift_y;
             end.z = parameters.robot_ankle_to_foot + lift_height;
             end.pitch = lift_pitch;
-            end.yaw = 0;
+            end.yaw = lift_yaw;
             kick_swing_generator(end, time, paraSwing, pointNum);
         }
         //support
@@ -6736,7 +6742,7 @@ void Robot::kick_generator(int kickType, kickPoint input){
             end.y = kick_y;
             end.z = parameters.robot_ankle_to_foot + lift_height + kick_height;
             end.pitch = kick_pitch;
-            end.yaw = target.yaw;
+            end.yaw = kick_yaw;
             kick_swing_generator(end, time, paraSwing, pointNum);
         }
         //support

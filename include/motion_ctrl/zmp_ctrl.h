@@ -34,10 +34,10 @@
 //Kick Time Parameters
 #define KICK_INIT_TIME 1.0
 #define KICK_COMTRANS_TIME 2.0
-#define KICK_LIFT_TIME 2.0
+#define KICK_LIFT_TIME 5.0
 #define KICK_SWING_TIME_SOFT   1.0	//about 0.8m
 #define KICK_SWING_TIME_MEDIUM 0.7  //about 2.3m
-#define KICK_SWING_TIME_STRONG 0.4  //about 5.5m
+#define KICK_SWING_TIME_STRONG 10.0 //about 5.5m
 
 // #define KICK_SOFT_VEL 0.2
 // #define KICK_MEDIUM_VEL 0.5
