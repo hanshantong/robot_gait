@@ -1504,7 +1504,9 @@ while(1)
 	                        		int kick_type = broadcast.InputPacket[2];
 									kick_type = KICK_STRONG; // kickType
 	                        		double kicking_angle = broadcast.InputPacket[2];
-	                        		h13->kick(0,kick_type,kicking_angle);
+	                        		double camera_x = 351.216;
+									double camera_y = 368.675;
+									h13->kick(kick_type, camera_x, camera_y);
 
 
 
