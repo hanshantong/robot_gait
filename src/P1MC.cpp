@@ -36,7 +36,7 @@ int walking = 0;
 int new_command = 1;
 int prev_ID = -1;
 int ID;
-int run_dxl = 1;
+int run_dxl = 0;
 /////////////////////////////////////THREAD DEFINE    //////////////////////////////////////////
 
 int nATI=0; //1:start ati thread
@@ -1504,10 +1504,9 @@ while(1)
 	                        		int kick_type = broadcast.InputPacket[2];
 									kick_type = KICK_STRONG; // kickType
 	                        		double kicking_angle = broadcast.InputPacket[2];
-	                        		double camera_x = 351.216;
-									double camera_y = 368.675;
+	                        		double camera_x = 235.15;
+									double camera_y = 334;
 									h13->kick(kick_type, camera_x, camera_y);
-
 
 
 	                        		// double step_width = 0.1;
