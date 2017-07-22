@@ -6473,9 +6473,9 @@ bool Robot::kick(int kickType, double camera_x, double camera_y, double yaw){
     kickPoint input;
     cam2kick(camera_x, camera_y, input.x, input.y);
 
-    //input.x = 0.43;
-    //input.y = -0.05;
-    input.yaw = 0;
+    input.x = 0.33;
+    input.y = -0.1;
+    input.yaw = pi/18;
     
     std::cout<<"KICK READY!"<<std::endl;
     bool kickRes = kick_generator(kickType, input);
@@ -6551,7 +6551,7 @@ bool Robot::input2target(kickPoint input, kickPoint &target){
 }
 
 //Force Insert Data: for set start data & uncontinious condition
-void Robot::kick_force_insert(kickPoint swing, kickPoint support, kickPoint zmp, double time) {
+void Robot::kick_force_insert(kickPoint swing, kickPoint support, kickPoint zmp, double time){
 
     ref_x_swing_foot_trajectory.insert(ref_x_swing_foot_trajectory.end(), (time/parameters.Ts), swing.x);
     ref_y_swing_foot_trajectory.insert(ref_y_swing_foot_trajectory.end(), (time/parameters.Ts), swing.y);
@@ -6591,27 +6591,54 @@ bool Robot::kick_generator(int kickType, kickPoint input){
     //Parameters Init
     //=============================================
     
+    //start point
+    {
+        double time = 0.1;
+        //swing
+        kickPoint swing;
+        swing.x = 0;
+        swing.y = -parameters.robot_width/2;
+        swing.z = parameters.robot_ankle_to_foot;
+        swing.pitch = 0;
+        swing.yaw = 0;
+        //support
+        kickPoint support;
+        support.x = 0;
+        support.y = parameters.robot_width/2;
+        support.z = parameters.robot_ankle_to_foot;
+        support.yaw = 0;
+        //zmp
+        kickPoint zmp;
+        zmp.x = 0;
+        zmp.y = 0;
+
+        kick_force_insert(swing, support, zmp, time);
+    }
+
     //target: the ball in the foot cordinate
     kickPoint target;
+    
     if(input2target(input, target) == false)    
     {
-        kick_wait(3);
+        kick_wait(3.0 - 0.1);
         return false;
     }
 
     int leftFlag = (target.y>0)?1:-1; // need to change: an zhao lift pan ding
     
+    double penalty_offset = -0.035;
+
     //LIFT
     double kick_distance = 0.25;
     double lift_x = target.x - (kick_distance + parameters.foot_length_front) * cos(target.yaw);
-    double lift_y = target.y - (kick_distance + parameters.foot_length_front) * sin(target.yaw);
+    double lift_y = target.y - (kick_distance + parameters.foot_length_front) * sin(target.yaw) - 0.03;
     double lift_height = 0.04;
     double lift_pitch = 0;
     double lift_yaw = target.yaw;
 
     //KICK
     double kick_x = target.x - parameters.foot_length_front * cos(target.yaw);
-    double kick_y = target.y - parameters.foot_length_front * sin(target.yaw);
+    double kick_y = target.y - parameters.foot_length_front * sin(target.yaw) - 0.03;
     double kick_height = 0.05;
     double kick_pitch = -pi / 10;
     double kick_yaw = target.yaw;
@@ -6679,30 +6706,6 @@ bool Robot::kick_generator(int kickType, kickPoint input){
     //==============================================
     //Execute
     //==============================================
-
-    //start point
-    {
-        double time = 0.1;
-        //swing
-        kickPoint swing;
-        swing.x = 0;
-        swing.y = leftFlag * parameters.robot_width/2;
-        swing.z = parameters.robot_ankle_to_foot;
-        swing.pitch = 0;
-        swing.yaw = 0;
-        //support
-        kickPoint support;
-        support.x = 0;
-        support.y = -leftFlag * parameters.robot_width/2;
-        support.z = parameters.robot_ankle_to_foot;
-        support.yaw = 0;
-        //zmp
-        kickPoint zmp;
-        zmp.x = 0;
-        zmp.y = 0;
-
-        kick_force_insert(swing, support, zmp, time);
-    }
     
     //init
     kick_wait(KICK_LIFT_TIME - 0.1); //0.1s for the start point initialize
@@ -7058,7 +7061,7 @@ bool Robot::kick_generator(int kickType, kickPoint input){
     return true;
 }
 
-void Robot::kick_swing_generator(kickPoint end, double time, double parameter[][7], const int pointNum) {
+void Robot::kick_swing_generator(kickPoint end, double time, double parameter[][7], const int pointNum){
     kickPoint offset;
     offset.x = end.x - ref_x_swing_foot_trajectory.back();
     offset.y = end.y - ref_y_swing_foot_trajectory.back();
