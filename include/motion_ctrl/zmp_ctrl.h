@@ -216,7 +216,7 @@ public:
 				double * swing_x_last, double * swing_y_last, double * swing_z_last, double * swing_theta_last, double * swing_psi_last,
 				double * x_zmp_last, double * y_zmp_last);
 		//KICK	
-			int kick(int kickType, double camera_x, double camera_y, double yaw = 0.0);
+			bool kick(int kickType, double camera_x, double camera_y, double yaw = 0.0);
 
 		private:
 			std::vector<double> leftIsSupportLeg_vector;

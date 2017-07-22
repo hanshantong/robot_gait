@@ -6465,7 +6465,7 @@ void Robot::softening_ankle(int left, int32_t * t_x, int32_t * t_y){
 };
 /*******************************Kicking Part START*******************************/
 
-int Robot::kick(int kickType, double camera_x, double camera_y, double yaw){
+bool Robot::kick(int kickType, double camera_x, double camera_y, double yaw){
 
     walking_state = 8;
 
@@ -6476,19 +6476,18 @@ int Robot::kick(int kickType, double camera_x, double camera_y, double yaw){
     //input.x = 0.43;
     //input.y = -0.05;
     input.yaw = 0;
-    std::cout<<"kick ready!"<<std::endl;
-    if(kick_generator(kickType, input)==false)
-    {
-        std::cout<<"can not kick!"<<std::endl;
-        return (1);  //can not kick
-    }
+    
+    std::cout<<"KICK READY!"<<std::endl;
+    bool kickRes = kick_generator(kickType, input);
     //push_into_gait_packet(gait_packet);
     parameters.N = ref_x_support_foot_trajectory.size();
     // return size;
     ref_psi_body.insert(ref_psi_body.end(), parameters.N, 0);
     set_MPC_initial_position(ref_x_zmp_trajectory.at(0), ref_y_zmp_trajectory.at(0));
-    std::cout<<"kick start!"<<std::endl;
-    return (0);              
+
+    if(kickRes == true) std::cout<<"KICK SUCCESS!"<<std::endl;
+    else                std::cout<<"KICK FAILED!"<<std::endl;
+    return kickRes;              
 
 }
 
@@ -6594,7 +6593,11 @@ bool Robot::kick_generator(int kickType, kickPoint input){
     
     //target: the ball in the foot cordinate
     kickPoint target;
-    if(input2target(input, target) == false)    return false;
+    if(input2target(input, target) == false)    
+    {
+        kick_wait(3);
+        return false;
+    }
 
     int leftFlag = (target.y>0)?1:-1; // need to change: an zhao lift pan ding
     
