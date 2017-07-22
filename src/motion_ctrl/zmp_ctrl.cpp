@@ -6465,7 +6465,7 @@ void Robot::softening_ankle(int left, int32_t * t_x, int32_t * t_y){
 };
 /*******************************Kicking Part START*******************************/
 
-void Robot::kick(int kickType, double camera_x, double camera_y, double yaw){
+int Robot::kick(int kickType, double camera_x, double camera_y, double yaw){
 
     walking_state = 8;
 
@@ -6473,25 +6473,82 @@ void Robot::kick(int kickType, double camera_x, double camera_y, double yaw){
     kickPoint input;
     cam2kick(camera_x, camera_y, input.x, input.y);
 
-
-    input.x = 0.33;
-    input.y = 0.1;
-    input.yaw = pi/18;
-    
-    kick_generator(kickType, input);
-
+    //input.x = 0.43;
+    //input.y = -0.05;
+    input.yaw = 0;
+    std::cout<<"kick ready!"<<std::endl;
+    if(kick_generator(kickType, input)==false)
+    {
+        std::cout<<"can not kick!"<<std::endl;
+        return (1);  //can not kick
+    }
     //push_into_gait_packet(gait_packet);
     parameters.N = ref_x_support_foot_trajectory.size();
     // return size;
     ref_psi_body.insert(ref_psi_body.end(), parameters.N, 0);
     set_MPC_initial_position(ref_x_zmp_trajectory.at(0), ref_y_zmp_trajectory.at(0));
+    std::cout<<"kick start!"<<std::endl;
+    return (0);              
 
 }
 
-//Camera Cordinate to Kick Cordinate ,need to change!!!!!!!!!
+//Camera Cordinate to Kick Cordinate
 void Robot::cam2kick(double camera_x, double camera_y, double &r_kick_x, double &r_kick_y){
     r_kick_x = (-0.2142 * camera_y + 112.016)/100.0;
     r_kick_y = (-0.216 * camera_x + 65.793)/100.0;
+}
+
+bool Robot::input2target(kickPoint input, kickPoint &target){
+    
+    if(input.y > -0.05 && input.y <= 0) {
+        target.y = -0.05;
+    }
+    else if(input.y >= -0.2 && input.y <= -0.05) {
+        target.y = input.y;
+    }
+    else if(input.y < -0.2) {
+        return false;
+    }
+    else if(input.y > 0 && input.y < 0.05) {
+        target.y = 0.05;
+    }
+    else if(input.y >= 0.05 && input.y <= 0.2) {
+        target.y = input.y;
+    }
+    else if(input.y > 0.2) {
+        return false;
+    }
+    else {
+        return false;
+    }
+
+    if(input.x < 0.23) {
+        target.x = 0.23;
+    }
+    else if(input.x >= 0.23 && input.x <= 0.38) {
+        target.x = input.x;
+    }
+    else if(input.x > 0.38 && input.x <= 0.43) {
+        if(abs(input.y) <= 0.09) {
+            target.x = input.x;
+        }
+        else if(abs(input.y) > 0.09) {
+            if(input.x > -0.455 * abs(input.y) + 0.471) {
+                return false;
+            }
+            target.x = input.x;
+        }
+    }
+    else if(input.x > 0.43) {
+        return false;
+    }
+    else {
+        return false;
+    }
+
+    target.yaw = input.yaw;
+    std::cout<<"target.x"<<target.x<<"target.y"<<target.y<<std::endl;
+    return true;
 }
 
 //Force Insert Data: for set start data & uncontinious condition
@@ -6529,7 +6586,7 @@ void Robot::kick_wait(double time){
     ref_y_zmp_trajectory.insert(ref_y_zmp_trajectory.end(), (time / parameters.Ts), ref_y_zmp_trajectory.back());
 }
 
-void Robot::kick_generator(int kickType, kickPoint input){
+bool Robot::kick_generator(int kickType, kickPoint input){
 
     //=============================================
     //Parameters Init
@@ -6537,17 +6594,8 @@ void Robot::kick_generator(int kickType, kickPoint input){
     
     //target: the ball in the foot cordinate
     kickPoint target;
-    target.x = input.x;
-    if(input.y >= 0.04 || input.y <= -0.04){
-        target.y = input.y;
-    }
-    else if(input.y >= 0 && input.y < 0.04){
-        target.y = 0.04;
-    }
-    else if(input.y > -0.04 && input.y < 0){
-        target.y = -0.03;
-    }
-    target.yaw = input.yaw;
+    if(input2target(input, target) == false)    return false;
+
     int leftFlag = (target.y>0)?1:-1; // need to change: an zhao lift pan ding
     
     //LIFT
@@ -6687,9 +6735,40 @@ void Robot::kick_generator(int kickType, kickPoint input){
         }
     }
 
+    //lift_buffer
+    {
+        double time = 0.75;
+        //swing
+        {   
+            kickPoint end;
+            end.x = 0;
+            end.y = leftFlag * parameters.robot_width/2;
+            end.z = parameters.robot_ankle_to_foot + 0.025;
+            end.pitch = 0;
+            end.yaw = 0;
+            kick_swing_generator(end, time, paraSwing, pointNum);
+        }
+        //support
+        {
+            kickPoint end;
+            end.x = 0;
+            end.y = -leftFlag * parameters.robot_width/2;
+            end.z = parameters.robot_ankle_to_foot;
+            end.yaw = 0;
+            kick_support_generator(end, time);
+        }
+        //zmp
+        {
+            kickPoint end;
+            end.x = parameters.zmp_offset_x;
+            end.y = -leftFlag * (parameters.robot_width/2 + kick_ZMP_y_increment);
+            kick_zmp_generator(end, time);
+        }
+    }
+
     //lift
     {
-        double time = KICK_LIFT_TIME;
+        double time = KICK_LIFT_TIME - 0.75;
         //swing
         {   
             kickPoint end;
@@ -6947,7 +7026,7 @@ void Robot::kick_generator(int kickType, kickPoint input){
         {
             kickPoint end;
             end.x = kick2dsp_distance;
-            end.y = -leftFlag * parameters.robot_width/2;// + lift_y_increment
+            end.y = -leftFlag * parameters.robot_width/2;
             end.z = parameters.robot_ankle_to_foot;
             end.pitch = 0;
             end.yaw = 0;
@@ -6957,7 +7036,7 @@ void Robot::kick_generator(int kickType, kickPoint input){
         {
             kickPoint end;
             end.x = kick2dsp_distance;
-            end.y = leftFlag * parameters.robot_width/2;// + lift_y_increment
+            end.y = leftFlag * parameters.robot_width/2;
             end.z = parameters.robot_ankle_to_foot;
             end.yaw = 0;
             kick_support_generator(end, time);
@@ -6966,12 +7045,14 @@ void Robot::kick_generator(int kickType, kickPoint input){
         {
             kickPoint end;
             end.x = kick2dsp_distance;
-            end.y = 0;// + lift_y_increment * leftFlag
+            end.y = 0;
             kick_zmp_generator(end, time);
         }
     }
 
     kick_wait(KICK_STOP_TIME);
+
+    return true;
 }
 
 void Robot::kick_swing_generator(kickPoint end, double time, double parameter[][7], const int pointNum) {

@@ -34,10 +34,10 @@
 //Kick Time Parameters
 #define KICK_INIT_TIME 1.0
 #define KICK_COMTRANS_TIME 2.0
-#define KICK_LIFT_TIME 5.0
+#define KICK_LIFT_TIME 3.0
 #define KICK_SWING_TIME_SOFT   1.0	//about 0.8m
 #define KICK_SWING_TIME_MEDIUM 0.7  //about 2.3m
-#define KICK_SWING_TIME_STRONG 10.0 //about 5.5m
+#define KICK_SWING_TIME_STRONG 0.4 //about 5.5m
 
 // #define KICK_SOFT_VEL 0.2
 // #define KICK_MEDIUM_VEL 0.5
@@ -216,7 +216,7 @@ public:
 				double * swing_x_last, double * swing_y_last, double * swing_z_last, double * swing_theta_last, double * swing_psi_last,
 				double * x_zmp_last, double * y_zmp_last);
 		//KICK	
-			void kick(int kickType, double camera_x, double camera_y, double yaw = 0.0);
+			int kick(int kickType, double camera_x, double camera_y, double yaw = 0.0);
 
 		private:
 			std::vector<double> leftIsSupportLeg_vector;
@@ -462,10 +462,11 @@ public:
 	
 	//kick
 		void cam2kick(double camera_x, double camera_y, double &r_kick_x, double &r_kick_y);
+		bool input2target(kickPoint input, kickPoint &target);
 		void kick_force_insert(kickPoint swing, kickPoint support, kickPoint zmp, double time);
 		void kick_wait(double time);
 
-		void kick_generator(int kickType, kickPoint input);
+		bool kick_generator(int kickType, kickPoint input);
 		void kick_swing_generator(kickPoint end, double time, double parameter[][7], const int pointNum);
 		void kick_swing_trajectory_generator_one_dimension(int mode, double startX, double offsetX, int pointNum, double* parametersX, double* parametersT, double time);
 		void kick_support_generator(kickPoint end, double time);
