@@ -1502,7 +1502,7 @@ while(1)
 									//kick Parameters
 	                        		bool leftKick = broadcast.InputPacket[1];
 	                        		int kick_type = broadcast.InputPacket[2];
-									kick_type = KICK_STRONG; // kickType
+									kick_type = KICK_PENALTY_RIGHT; // kickType
 	                        		double kicking_angle = broadcast.InputPacket[2];
 	                        		double camera_x = 235.15;
 									double camera_y = 336;

@@ -43,9 +43,7 @@
 // #define KICK_MEDIUM_VEL 0.5
 // #define KICK_STRONG_VEL 0.5
 
-#define KICK_KICK2DSP_TIME_SOFT 1.5
-#define KICK_KICK2DSP_TIME_MEDIUM 1.5
-#define KICK_KICK2DSP_TIME_STRONG 2.0
+#define KICK_KICK2DSP_TIME 1.5
 
 #define KICK_DSP_TIME 3.0
 
@@ -57,7 +55,9 @@
 #define KICK_SOFT 0
 #define KICK_MEDIUM 1
 #define KICK_STRONG 2
-#define KICK_HIGHKICK 3
+#define KICK_PENALTY_LEFT 3
+#define KICK_PENALTY_RIGHT 4
+#define KICK_HIGHKICK 9
 
 struct kickPoint
 {
