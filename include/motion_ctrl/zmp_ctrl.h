@@ -37,11 +37,7 @@
 #define KICK_LIFT_TIME 3.0
 #define KICK_SWING_TIME_SOFT   1.0	//about 0.8m
 #define KICK_SWING_TIME_MEDIUM 0.7  //about 2.3m
-#define KICK_SWING_TIME_STRONG 0.4 //about 5.5m
-
-// #define KICK_SOFT_VEL 0.2
-// #define KICK_MEDIUM_VEL 0.5
-// #define KICK_STRONG_VEL 0.5
+#define KICK_SWING_TIME_STRONG 0.4 //about 5.5m	
 
 #define KICK_KICK2DSP_TIME 1.5
 
@@ -57,7 +53,6 @@
 #define KICK_STRONG 2
 #define KICK_PENALTY_LEFT 3
 #define KICK_PENALTY_RIGHT 4
-#define KICK_HIGHKICK 9
 
 struct kickPoint
 {
@@ -216,7 +211,8 @@ public:
 				double * swing_x_last, double * swing_y_last, double * swing_z_last, double * swing_theta_last, double * swing_psi_last,
 				double * x_zmp_last, double * y_zmp_last);
 		//KICK	
-			bool kick(int kickType, double camera_x, double camera_y, double yaw = 0.0);
+			bool kick(int kickType, double camera_x, double camera_y);
+			void highkick();
 
 		private:
 			std::vector<double> leftIsSupportLeg_vector;

@@ -1502,12 +1502,12 @@ while(1)
 									//kick Parameters
 	                        		bool leftKick = broadcast.InputPacket[1];
 	                        		int kick_type = broadcast.InputPacket[2];
-									kick_type = KICK_PENALTY_RIGHT; // kickType
+									kick_type = KICK_PENALTY_LEFT; // kickType
 	                        		double kicking_angle = broadcast.InputPacket[2];
 	                        		double camera_x = 235.15;
 									double camera_y = 336;
-									h13->kick(kick_type, camera_x, camera_y);
-
+									//h13->kick(kick_type, camera_x, camera_y);
+									h13->highkick();
 
 	                        		// double step_width = 0.1;
 	                        		// std::cout << "erase and walking " << std::endl;
