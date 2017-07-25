@@ -1506,8 +1506,13 @@ while(1)
 	                        		double kicking_angle = broadcast.InputPacket[2];
 	                        		double camera_x = 235.15;
 									double camera_y = 336;
+<<<<<<< HEAD
 									//h13->kick(kick_type, camera_x, camera_y);
 									h13->highkick();
+=======
+									h13->kick(kick_type, camera_x, camera_y);
+
+>>>>>>> 9ac890f44e7798dce439092f5d5205afe2111bf9
 
 	                        		// double step_width = 0.1;
 	                        		// std::cout << "erase and walking " << std::endl;
