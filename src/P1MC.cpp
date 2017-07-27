@@ -32,11 +32,49 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 #include <P1MC.h>
+
+
+// FIXED (FLAGS)
+
 int walking = 0;
 int new_command = 1;
-int prev_ID = -1;
-int ID;
+int kick_warning = 0;
+// int prev_ID = -1;
+// int ID;
+int prev_state = 0;
+//If 1 == USE VISON UDP, ELSE USE CMD.
+int command_type_from_udp = 0;
+float command_arg_1_from_udp = 0;
+float command_arg_2_from_udp = 0;
+float command_arg_3_from_udp = 0;
+float command_arg_4_from_udp = 0;
+float command_arg_5_from_udp = 0;
+// FOR CURVE
+int circle1_finished = 0;
+int circle2_finished = 0;
+int circle3_finished = 0;
+int straight_finished = 0;
+int generate_new = 1;
+int all_finished = 1;
+int use_default_curve = 0;
+int use2circles = 1;
+double psi_circle_2 = 0;
+
+int walking_counter = 0;
+int walking_enable  = 0;
+//int count_number = 200;
+
+//********************************//
+// On off parameters
+int useVision = 0;
 int run_dxl = 1;
+//================================//
+float odom_x, odom_y, odom_psi;
+float odom_x_curve_temp, odom_y_curve_temp, odom_psi_curve_temp;
+double x_goal_old, y_goal_old, psi_goal_old;
+// odom_x = 0;
+// odom_y = 0;
+// odom_psi = 0;
 /////////////////////////////////////THREAD DEFINE    //////////////////////////////////////////
 
 int nATI=0; //1:start ati thread
@@ -55,6 +93,8 @@ double time_passed, t_initial, t1,t2,t3,t4;
 bool flag_motion_thread_stop = 0;
 bool flag_motion_upbody_thread_stop = 0;
 bool flag_ati_thread_stop = 0;
+
+
 bool flag_mti_thread_stop = 0;
 bool flag_comm_thread_stop = 0;
 bool flag_comm_vision_thread_stop = 0;
@@ -68,7 +108,7 @@ bool flag_comm_vision_thread_stop = 0;
 #define MC_TIMER_PERIOD                 5000000             // 2ms
 
 #define DXL_NUM                         12                   // number of dxl motors
-#define DXL_NUM_UPBODY                  7                    // number of dxl motors of upbody  added by lichunjing 2017-06-15
+#define DXL_NUM_UPBODY                  9                    // number of dxl motors of upbody  added by lichunjing 2017-06-15
 
 #define GEAR_RATIO 501.9
 #define DEGREE_TO_REG_VALUE_SF (250961.5 / 180.0)      //
@@ -282,7 +322,7 @@ bool loadConfig()
 typedef struct {
 	char robotID;
 	float OutputPacket[160];//the content of this packet
-	float InputPacket[5];
+	float InputPacket[10];
 	bool ReceiveExecuted;//updated means that receiver can receive information
 	bool SendExecuted;//true means that receiver has received the information,and the sender can send;false means the sender is sending
 	int outputSocket;
@@ -297,8 +337,8 @@ typedef struct {
 
 typedef struct {
 	char robotID;
-	float OutputPacket[7];//the content of this packet
-	float InputPacket[6];
+	float OutputPacket[10];//the content of this packet
+	float InputPacket[11];
 	bool ReceiveExecuted;//updated means that receiver can receive information
 	bool SendExecuted;//true means that receiver has received the information,and the sender can send;false means the sender is sending
 	int outputSocket;
@@ -344,11 +384,11 @@ Broadcast broadcast;
 Broadcast_Vision broadcast_vision;
 float gait_packet[108];
 
-int outputPort=51657;
+int outputPort=51600;
 int inputPort=51654;
 
-int outputPort_Vision=51657;
-int inputPort_Vision=51654;
+int outputPort_Vision=51656;
+int inputPort_Vision=51655;
 
 int UDPSocket(int port){
 	int sockfd;							//定义socket套接字
@@ -417,7 +457,7 @@ void InitComm()
 
 void InitComm_Vision_Ctrl()
 {
-	broadcast_vision.port=51654;
+	broadcast_vision.port=51655;
 
 	for(int i=0;i<6;i++)
 		broadcast_vision.InputPacket[i] = 0;
@@ -464,18 +504,20 @@ void GetSocketData(float _nTime, dxl_Actuator *_dxl_actuator)
 	// broadcast.OutputPacket[100] = t1;
 	// broadcast.OutputPacket[101] = t2;
 	// broadcast.OutputPacket[102] = t3;
+
 }
 
 void SendData()
 {
 	if(bIsSendData)
 	{
+		// printf("P1MC Send Data to UDP ctrl\n");
 		int count=-1;
-		// count= UDPSend(broadcast.outputSocket,broadcast.OutputPacket,sizeof(broadcast.OutputPacket),"192.168.0.101",51656);	
+		// count= UDPSend(broadcast.outputSocket,broadcast.OutputPacket,sizeof(broadcast.OutputPacket),"192.168.8.39",51656);	
 		//printf("%d\n",count);
-		count= UDPSend(broadcast.outputSocket,broadcast.OutputPacket,sizeof(broadcast.OutputPacket),"127.0.0.1",51658);	
+		count= UDPSend(broadcast.outputSocket,broadcast.OutputPacket,sizeof(broadcast.OutputPacket),"127.0.0.1",51645);	
 
-		if(count ==-1)printf("Communication: UDPSend Error!\n"); 
+		// if(count ==-1)printf("Communication: UDPSend Error!\n"); 
 	}
 }
 
@@ -485,18 +527,27 @@ void GetVisionData(float _nTime)
 	broadcast_vision.OutputPacket[1] = gmti_data.eulerangles.Yaw;  //Robot_mti_yaw
 	broadcast_vision.OutputPacket[2] = gmti_data.eulerangles.Pitch; //Robot_mti_pitch
 	broadcast_vision.OutputPacket[3] = gmti_data.eulerangles.Roll;  //Robot_mti_roll
-	broadcast_vision.OutputPacket[4] = 12;    //Odometry_dx
-	broadcast_vision.OutputPacket[5] = 13;    //Odometry_dy
-	broadcast_vision.OutputPacket[6] = 14;    //Odometry_dtheta
+	broadcast_vision.OutputPacket[4] = odom_x;    //Odometry_dx
+	broadcast_vision.OutputPacket[5] = odom_y;    //Odometry_dy
+	broadcast_vision.OutputPacket[6] = odom_psi;    //Odometry_dtheta
+	broadcast_vision.OutputPacket[7] = walking;    //
+	broadcast_vision.OutputPacket[8] = kick_warning;			//Can we kick? 1 means we can't kick?
+	if(kick_warning == 1)
+	{
+		std::cout << "Send Kick Warning " << kick_warning << std::endl;	
+	}
 
+	broadcast_vision.OutputPacket[9] = 0;					//Blanck MSG.
+
+	std::cout<< walking << "status" <<endl;
 }
 
 void SendVisionData()
 {
 	int count=-1;
-	count= UDPSend(broadcast_vision.outputSocket,broadcast_vision.OutputPacket,sizeof(broadcast_vision.OutputPacket),"127.0.0.1",51656);	
+	count= UDPSend(broadcast_vision.outputSocket,broadcast_vision.OutputPacket,sizeof(broadcast_vision.OutputPacket),"192.168.8.255",51656);	
 		//printf("%d\n",count);
-	if(count ==-1)printf("Communication: UDPSend Error!\n"); 
+	// if(count ==-1)printf("Communication: UDPSend Error!\n"); 
 }
 
 ///////////////////////////////////    End of Socket ///////////////////////////////////////////////////
@@ -953,7 +1004,7 @@ void* sensorATI_2(void* data) {
 			ati_mini45->update_ft_data_restart_stream_mode(ati_portHandler);
 			ati_mini45->update_to_gloable_var(gati_data+1);
 			//std::cout << "Right" << std::endl;
-			// ati_mini45->print_ft();
+			ati_mini45->print_ft();
 			if(ati_mini45->check_error_counter >= 5)
 			{
 				ati_mini45->check_error_counter = 0;
@@ -995,6 +1046,19 @@ void* motion(void* data)
 	openTimer();
 	InitTimer();
 	setTimer(0,5);//5 ms timer
+
+	// int counter_theta_out_of_range = 0;
+	// int counter_delta_theta_out_of_range = 0;
+	// int counter_lose_paket = 0;
+
+	int  comm_result_fail_count = 0;
+	int  flag_comm_result_fail_continuous = 0;
+
+	int  theta_out_of_range_count = 0;
+	int  flag_theta_out_of_range_continuous = 0;
+
+	int  delta_theta_out_of_range_count = 0;
+	int  flag_delta_theta_out_of_range_continuous = 0;
 
 	float time,time_zero;
 
@@ -1083,7 +1147,7 @@ void* motion(void* data)
     	else{
     		pid_controller[i].PID_setgains(Kp, Ki, Kd1, Kd2);
     	}	
-    	if( (i == 5) || (i == 11) ){
+    	if( (i == 0) || (i == 6) ){
     		pid_controller[i].PID_setoutMin(-300);
     		pid_controller[i].PID_setoutMax(300);
     	}
@@ -1135,8 +1199,8 @@ void* motion(void* data)
 	// /*==================COMMENT OUT FOR OFFLINE==================*/
 while(1)
 {
-	// std::cout << "=======" <<std::endl;
-	// std::cout << "command type: " << broadcast.InputPacket[0]	<< ", ID: " << broadcast.InputPacket[4] << std::endl;
+
+
 	if(flag_motion_thread_stop == 0)
 	{
 		getNextTimerEvent( popupTimers, numOfTimerEvents );
@@ -1173,23 +1237,84 @@ while(1)
 							dxl_actuator->SyncRead_Send(dxl_packetHandler, dxl_groupSyncRead);  //select one of SyncRead_Send function is OK
 							clipTime(&time_passed, &t_initial);
 							t1 = time_passed;
+							// for(int i=0;i<DXL_NUM;i++)
+							// {
+							// 	dxl_actuator[i].Update_Pos_Vel(dxl_packetHandler, dxl_groupSyncRead);
+							// 	dxl_actuator[i].check_theta_range();	
+							// 	dxl_actuator[i].check_delta_theta_range();
+							// 	if(dxl_actuator[i].flag_theta_InRange == 0)
+							// 	{
+							// 		counter_theta_out_of_range++;
+							// 		printf("dxl_actuator:%d theta out of range!\n", i);
+							// 		printf("present_theta = %f, previous_theta = %f, flag_theta_InRange = %d\n", dxl_actuator[i].get_present_theta(), dxl_actuator[i].get_previous_theta(), dxl_actuator[i].flag_theta_InRange);
+							//    		dxl_actuator[i].flag_theta_InRange = 1;
+							//    		//dxl_actuator[i].present_theta = dxl_actuator[i].previous_theta;
+							//    		// return 0;
+							// 	}
+							// 	if(dxl_actuator[i].flag_delta_theta_InRange == 0)
+							// 	{
+							// 		counter_delta_theta_out_of_range++;
+							// 		printf("dxl_actuator:%d delta theta out of range!\n", i);
+							// 		printf("present_theta = %f, previous_theta = %f, flag_delta_theta_InRange = %d\n", dxl_actuator[i].get_present_theta(), dxl_actuator[i].get_previous_theta(),dxl_actuator[i].flag_delta_theta_InRange);
+							// 		dxl_actuator[i].flag_delta_theta_InRange = 1;
+							//    		//dxl_actuator[i].present_theta = dxl_actuator[i].previous_theta;
+							//    		// return 0;
+							// 	}							
+
+							// }
+
 							for(int i=0;i<DXL_NUM;i++)
 							{
 								dxl_actuator[i].Update_Pos_Vel(dxl_packetHandler, dxl_groupSyncRead);
 								dxl_actuator[i].check_theta_range();	
 								dxl_actuator[i].check_delta_theta_range();
-								if(dxl_actuator[i].flag_theta_InRange == 0)
+								if((dxl_actuator[i].flag_theta_InRange == 0)&&(flag_theta_out_of_range_continuous == 0))
 								{
+									theta_out_of_range_count++;
+									flag_theta_out_of_range_continuous = 1;
 									printf("dxl_actuator:%d theta out of range!\n", i);
-							   		// return 0;
+									printf("present_theta = %f, previous_theta = %f, flag_theta_InRange = %d\n", dxl_actuator[i].get_present_theta(), dxl_actuator[i].get_previous_theta(), dxl_actuator[i].flag_theta_InRange);
+									dxl_actuator[i].flag_theta_InRange = 1;
+									dxl_actuator[i].present_theta = dxl_actuator[i].previous_theta;
+							  		// return 0;
 								}
-								if(dxl_actuator[i].flag_delta_theta_InRange == 0)
+								else if((dxl_actuator[i].flag_theta_InRange == 0)&&(flag_theta_out_of_range_continuous == 1))
 								{
+									theta_out_of_range_count++;
+									dxl_actuator[i].present_theta = dxl_actuator[i].previous_theta;
+								}
+								else
+								{
+									theta_out_of_range_count = 0;
+									flag_theta_out_of_range_continuous = 0;
+								}
+
+
+								if((dxl_actuator[i].flag_delta_theta_InRange == 0)&&(flag_delta_theta_out_of_range_continuous == 0))
+								{
+									delta_theta_out_of_range_count++;
 									printf("dxl_actuator:%d delta theta out of range!\n", i);
-							   		// return 0;
-								}							
+									printf("present_theta = %f, previous_theta = %f, flag_delta_theta_InRange = %d\n", dxl_actuator[i].get_present_theta(), dxl_actuator[i].get_previous_theta(),dxl_actuator[i].flag_delta_theta_InRange);
+									dxl_actuator[i].flag_delta_theta_InRange = 1;
+									dxl_actuator[i].present_theta = dxl_actuator[i].previous_theta;
+							  		// return 0;
+								}
+								else if((dxl_actuator[i].flag_delta_theta_InRange == 0)&&(flag_delta_theta_out_of_range_continuous == 1))
+								{
+									delta_theta_out_of_range_count++;
+									dxl_actuator[i].present_theta = dxl_actuator[i].previous_theta;
+								}	
+								else
+								{
+									delta_theta_out_of_range_count = 0;
+									flag_delta_theta_out_of_range_continuous = 0;
+								}						
 
 							}
+
+
+
+
 
 						}
 					// /*==================COMMENT OUT FOR OFFLINE==================*/
@@ -1216,54 +1341,113 @@ while(1)
 	                        // printf("present_theta[0]: %f\t present_theta[1]: %f\t \n",(dxl_actuator)->present_theta,(dxl_actuator+1)->present_theta);
 	                        // printf("goal_theta[0]: %f\t goal_theta[1]: %f\t  goal_theta[2]: %f\t \n",(dxl_actuator)->goal_theta,(dxl_actuator+1)->goal_theta,(dxl_actuator+2)->goal_theta);                                 
 //====================================================================GAIT==================================================       
-	// std::cout << "command type: " << broadcast.InputPacket[0]	<< ", ID: " << broadcast.InputPacket[4] << std::endl;
-							ID = broadcast.InputPacket[4];
+							// ID = broadcast.InputPacket[4];"
+													// std::cout << "walking: " << walking << std::endl;
+						if(useVision == 1){
+							// std::cout << "walking: " << walking 
+							// << ", command_type_from_udp: " << command_type_from_udp
+							// << ", walking enable: " << walking_enable << ", walking_counter: " << walking_counter << std::endl;
+						}
+						if( walking == 0 && walking_counter < 600){
+							walking_counter++;
+							if(command_type_from_udp != prev_state){
+								walking_enable = 1;
+								walking_counter = 0;
+							}
+							else{
+								walking_enable = 0;
+							}
+								//walking = 0;
+						}
+						else if(walking_enable == 0 && walking_counter == 600){
+							walking_counter = 0;
+							walking_enable  = 1;
+						}
 
 	                        //UDP socket control, InputPacket FLOAT[0]:1-ZERO,2-STAND,3-WALK;FLOAT[1]~FLOAT[3] to be defined
-	                        if(broadcast.InputPacket[0] == 10)//Stand
+	                        if(command_type_from_udp == 10)//Stand
 	                        {
 	                        	if(!bIsWalkStart)
 	                        	{
 	                        		time_zero=time;
 	                        		bIsWalkStart=true;
 	                        	}
-	                        	prev_ID = ID;
+	                        	// prev_ID = ID;
 	                        	h13->stand(dxl_actuator, DXL_NUM);
 	                        	if(bIsWalkStart){
-	                        		std::cout << "going to stand " << std::endl;
+	                        		//std::cout << "going to stand " << std::endl;
 	                        	}
+	                        	prev_state = 10;
 
 	                        }
-	                        else if(broadcast.InputPacket[0] == 9)//Stopping
+	                        else if(command_type_from_udp == 9)//Stopping
 	                        {
+	                        	//kick_warning = 0;
+	                        	if(prev_state != 10 && prev_state != 0 && prev_state != 8){
+	                        		//kick_warning = 0; // Clear the Kick Warning.
+
 	                        	// h13->stop(dxl_actuator, gait_packet);
-	                        	if((prev_ID != ID) && (walking == 1)){
+	                        	// if((prev_ID != 9) && (walking == 1)){
 	                        	//==================
-	                        		// h13->erase_trajectories();
+	                        		if((walking == 1) && prev_state != 9){
 
-	                        		if(!bIsWalkStart)
-	                        		{
-	                        			time_zero=time;
-	                        			bIsWalkStart=true;
+		                        		// h13->erase_trajectories();
+
+	                        			if(!bIsWalkStart)
+	                        			{
+	                        				time_zero=time;
+	                        				bIsWalkStart=true;
+	                        			}
+
+	                        			std::cout << "Finish walk and then stop " << std::endl;
+	                        			h13->stopGait();
+									//======================
+
 	                        		}
+	                        		else{
 
-	                        		std::cout << "Finish walk and then stop " << std::endl;
-	                        		h13->stopGait();
-	                        		
-	                        		
-								//======================
-	                        		
-	                        	}
-	                        	else{
-	                        		
+	                        			walking = h13->walk(dxl_actuator, gait_packet);
+													// Log the data and send via udp
+	                        			GetSocketData(time-time_zero,dxl_actuator);
+	                        			SendData();
+	                        		}
+	                        	// prev_ID = 9;
+	                        		prev_state = 9;
+
+	                        		circle1_finished = 0;
+	                        		straight_finished = 0;
+	                        		circle2_finished = 0;
+	                        		circle3_finished = 0;
+
+	                        		generate_new = 1;
+	                        		all_finished = 1;
+	                        	}	
+	                        	// else if(walking == 0 && prev_state == 8){
+	                        	// 	walking = h13->walk(dxl_actuator, gait_packet);
+	                        	// 	// std::cout 
+	                        	// 	prev_state = 9;
+
+	                        	// }
+	                        	// else if(walking == 1 && prev_state == 8){
+	                        	// 	walking = h13->walk(dxl_actuator, gait_packet);
+	                        	// 	// std::cout 
+
+	                        	// }
+	                        	else if(prev_state == 8){
+
 	                        		walking = h13->walk(dxl_actuator, gait_packet);
-												// Log the data and send via udp
+	                        		// std::cout 
 	                        		GetSocketData(time-time_zero,dxl_actuator);
-	                        		SendData();
+									SendData();	
 	                        	}
-	                        	prev_ID = 9;
+	                       
+	                        	else{
+	                        		walking =0;
+	                        	}
+	                        	// std::cout << "walking: " << walking << std::endl;
+
 	                        }
-	                        else if(broadcast.InputPacket[0] == 1)//Straight Forward
+	                        else if(command_type_from_udp == 1 )//Straight Forward
 	                        {
 	                        	// std::cout << "case  1: ID " << ID << std::endl;
 	                        	if(!bIsWalkStart)
@@ -1271,29 +1455,40 @@ while(1)
 	                        		time_zero=time;
 	                        		bIsWalkStart=true;
 	                        	}
-	                        	if(walking == 0 && ( prev_ID != ID)){ // || h13->get_walking_state() != 1)){
+								if(walking == 0 && walking_enable == 1){ // || h13->get_walking_state() != 1)){
+
+	                        	// if(walking == 0 && ( prev_ID != ID)){ // || h13->get_walking_state() != 1)){
 	                        		//===============================
-	                        		h13->erase_trajectories();
+									std::cout << "erasing trajectories: " << std::endl;
+									h13->erase_trajectories();
 
 	                        		// int forward  = (int) (broadcast.InputPacket[1]);
-	                        		int forward = 1;
-	                        		int leftFootStart = 1;
-	                        		int step_amount = (int) (broadcast.InputPacket[1]);
-	                        		double step_length = (float) (broadcast.InputPacket[2]);
-	                        		std::cout << "Generated walk with: forward" << forward << "," << step_amount << " steps and " << step_length << " step length" << std::endl;
-	                        		h13->calc_trajectories_walk_straight(forward, leftFootStart, step_amount, step_length);
+									int forward = 1;
+									int leftFootStart = 1;
+									int step_amount = (int) (command_arg_1_from_udp) + 2;
+									if(step_amount <= 2)
+									{
+										step_amount = 3;//Bug.
+									}
+									double step_length = (float) (command_arg_2_from_udp);
+									std::cout << "Generated walk with: forward" << forward << "," << step_amount << " steps and " << step_length << " step length" << std::endl;
+									h13->calc_trajectories_walk_straight(forward, leftFootStart, step_amount, step_length);
 									//====================================         	                        		
-	                        		prev_ID = ID;	
-	                        	}
-	                        	else{
-	                        		walking = h13->walk(dxl_actuator, gait_packet);
+	                        		// prev_ID = ID;	
+									walking = 1;
+
+								}
+								else{
+									walking = h13->walk(dxl_actuator, gait_packet);
 												// Log the data and send via udp
-	                        		GetSocketData(time-time_zero,dxl_actuator);
-	                        		SendData();
-	                        	}	  
-	                        	// std::cout << "state: " << h13->get_walking_state() << std::endl;
-	                        }
-	                        else if(broadcast.InputPacket[0] == 2)//Straight Backward
+									GetSocketData(time-time_zero,dxl_actuator);
+									SendData();
+								}	  
+								prev_state = 1;
+								// if(useVision == 0)
+									// std::cout << "state: " << h13->get_walking_state() << std::endl;
+							}
+	                        else if(command_type_from_udp == 2)//Straight Backward
 	                        {
 	                        	// std::cout << "case  2, ID: "<< ID << std::endl;
 	                        	if(!bIsWalkStart)
@@ -1301,19 +1496,25 @@ while(1)
 	                        		time_zero=time;
 	                        		bIsWalkStart=true;
 	                        	}
-	                        	if(walking == 0 && ( prev_ID != ID )){ //|| h13->get_walking_state() != 2)){
+	                        	if(walking == 0 && walking_enable == 1){ //|| h13->get_walking_state() != 2)){
 	                        		//===============================
 	                        		h13->erase_trajectories();
 
 	                        		// int forward  = (int) (broadcast.InputPacket[1]);
 	                        		int forward = 0;
 	                        		int leftFootStart = 1;
-	                        		int step_amount = (int) (broadcast.InputPacket[1]);
-	                        		double step_length = (float) (broadcast.InputPacket[2]);
+	                        		int step_amount = (int) (command_arg_1_from_udp) + 2;
+									if(step_amount <= 2)
+									{
+										step_amount = 3;//Bug.
+									}
+	                        		double step_length = (double) (command_arg_2_from_udp);
 	                        		std::cout << "Generated walk with: backward" << forward << "," << step_amount << " steps and " << step_length << " step length" << std::endl;
 	                        		h13->calc_trajectories_walk_straight(forward, leftFootStart, step_amount, step_length);
 									//====================================         	                        		
-	                        		prev_ID = ID;
+	                        		// prev_ID = ID;	
+	                        		walking = 1;
+	                        		// walking_enable = 0;
 	                        	}
 	                        	else{
 	                        		walking = h13->walk(dxl_actuator, gait_packet);
@@ -1321,16 +1522,18 @@ while(1)
 	                        		GetSocketData(time-time_zero,dxl_actuator);
 	                        		SendData();
 	                        	}	  
-	                        	// std::cout << "state: " << h13->get_walking_state() << std::endl;
+	                        	prev_state = 2;
+	                        	if(useVision == 0)
+	                        		std::cout << "state: " << h13->get_walking_state() << std::endl;
 	                        }
-						    else if(broadcast.InputPacket[0] == 3)//Side Left
+						    else if(command_type_from_udp == 3)//Side Left
 						    {
 						    	if(!bIsWalkStart)
 						    	{
 						    		time_zero=time;
 						    		bIsWalkStart=true;
 						    	}
-						    	if(walking == 0 && ( prev_ID != ID )){ //|| h13->get_walking_state() != 3)){
+						    	if(walking == 0 && walking_enable == 1){ //|| h13->get_walking_state() != 3)){
 
                         		//=================
 						    		h13->erase_trajectories();
@@ -1339,12 +1542,16 @@ while(1)
 						    		int leftside = 1;
 								  //  If left side then Rightfoot Start first.
 									int leftFootStart       = 1 - leftside;  //left foot swing, right foot static first if == 0
-									int step_amount = (int) (broadcast.InputPacket[1]);
 
-									double step_width = (double) (broadcast.InputPacket[2]);
+									int step_amount = (int) (command_arg_1_from_udp) * 2 + 1;
+									if(step_amount == 1)
+										step_amount = 3;
+									double step_width = (double) (command_arg_2_from_udp);
 									std::cout << "Generated walk with: left" << leftside << "," << step_amount << " steps and " << step_width << " step width" << std::endl;
 									h13->calc_trajectories_walk_side(leftside, leftFootStart, step_amount, step_width);
-									prev_ID = ID;
+									// prev_ID = ID;	
+									walking = 1;
+	                        		// walking_enable = 0;
 									//==================
 								}
 								else{
@@ -1353,16 +1560,18 @@ while(1)
 									GetSocketData(time-time_zero,dxl_actuator);
 									SendData();
 								}
-								// std::cout << "state: " << h13->get_walking_state() << std::endl;
+								prev_state = 3;
+								if(useVision == 0)
+									std::cout << "state: " << h13->get_walking_state() << std::endl;
 							}       
-							else if(broadcast.InputPacket[0] == 4)//Side Right
+							else if(command_type_from_udp == 4)//Side Right
 							{
 								if(!bIsWalkStart)
 								{
 									time_zero=time;
 									bIsWalkStart=true;
 								}
-								if(walking == 0 && ( prev_ID != ID)){ // || h13->get_walking_state() != 4)){
+								if(walking == 0 && walking_enable == 1){ // || h13->get_walking_state() != 4)){
                         		//=================
 									h13->erase_trajectories();
 
@@ -1370,12 +1579,16 @@ while(1)
 									int leftside = 0;
 								  //  If left side then Rightfoot Start first.
 									int leftFootStart       = 1 - leftside;  //left foot swing, right foot static first if == 0
-									int step_amount = (int) (broadcast.InputPacket[1]);
 
-									double step_width = (double) (broadcast.InputPacket[2]);
+									int step_amount = (int) (command_arg_1_from_udp) * 2 + 1;
+									if(step_amount == 1)
+										step_amount = 3;
+									double step_width = (double) (command_arg_2_from_udp);
 									std::cout << "Generated walk with: right" << leftside << "," << step_amount << " steps and " << step_width << " step width" << std::endl;
 									h13->calc_trajectories_walk_side(leftside, leftFootStart, step_amount, step_width);
-									prev_ID = ID;
+									// prev_ID = ID;	
+									walking = 1;
+	                        		// walking_enable = 0;
 									//==================
 								}
 								else{
@@ -1384,12 +1597,26 @@ while(1)
 									GetSocketData(time-time_zero,dxl_actuator);
 									SendData();
 								}
-								std::cout << "state: " << h13->get_walking_state() << std::endl;
+								prev_state = 4;
+								if(useVision == 0)
+									std::cout << "state: " << h13->get_walking_state() << std::endl;
 							}       
-	                        else if(broadcast.InputPacket[0] == 5)//Curve
+	                        else if(command_type_from_udp == 5)//Curve
 	                        {
-	                        	if(walking == 0 && ( prev_ID !=ID )){ //|| h13->get_walking_state() != 5)){	   
-                 			//====================================                            
+
+
+	                        	// odom_x 		= h13->body_x;
+	                        	// odom_y 		= h13->body_y;
+	                        	// odom_psi 	= h13->body_psi;
+
+								// if(walking == 0 && walking_enable == 1){ // || h13->get_walking_state() != 4)){
+	                        	// std::cout << "prev_state: " << prev_state << ", generate_new: " << generate_new << ", walking: " << walking << std::endl;
+
+	                        	//==============CSC==============================
+	                        	if(((generate_new == 1 && prev_state == 5)|| walking == 0) && walking_enable == 1){ //|| h13->get_walking_state() != 5)){	   
+	                        	// ==============CSC==============================
+                					//====================================  
+	                        		std::cout << "erasing" << std::endl;                   
 	                        		h13->erase_trajectories();
 
 	                        		if(!bIsWalkStart)
@@ -1400,29 +1627,309 @@ while(1)
 
 	                        		int forward  = 1;
 	                        		int leftFootStart = 1;
-	                        		double x_goal = (double) (broadcast.InputPacket[1]);
-	                        		double y_goal = (double) (broadcast.InputPacket[2]);
-	                        		double psi_goal = (double) (broadcast.InputPacket[3]*pi/180);
-	                        		std::cout << "Generated curve gait with: " << x_goal << "," << y_goal << "," << psi_goal << std::endl;
 
-	                        		h13->calc_trajectories_walk_curve(forward, leftFootStart, x_goal, y_goal, psi_goal);
-									//==================================
-	                        		prev_ID = ID;
+	                        		if(command_arg_3_from_udp >=90*pi/180)
+	                        		{
+	                        			command_arg_3_from_udp = 90.0*pi/180;
+	                        		}
+
+
+	                        		else if(command_arg_3_from_udp <= -90.0*pi/180)
+	                        		{
+	                        			command_arg_3_from_udp = -90.0*pi/180;
+	                        		}
+	                        		if(fabs(command_arg_1_from_udp) < 0.1)
+	                        		{
+	                        			command_arg_1_from_udp = 0.1;
+	                        		}
+
+
+	                        		if(command_arg_2_from_udp > 0)
+	                        		{
+	                        			leftFootStart = 0;
+	                        		}else
+	                        		{
+	                        			leftFootStart = 1;
+	                        		}
+
+
+
+
+
+	                        		if(fabs(command_arg_2_from_udp) / fabs(command_arg_1_from_udp) > 3)	//If the Y >> X, limit it.
+	                        		{
+	                        			command_arg_2_from_udp = 3 * command_arg_2_from_udp / fabs(command_arg_2_from_udp) * fabs(command_arg_1_from_udp);
+	                        		}
+	                        		if(command_arg_1_from_udp < 0){
+	                        			
+	                        			std::cout << "x needs to be positive. Stopping" << std::endl;
+	                        		}
+	                        		double x_goal, y_goal, psi_goal;
+	                        		if(all_finished == 1){
+		                        		x_goal = (double) fabs((command_arg_1_from_udp));	//NOTICE THE LIMIT
+		                        		y_goal = (double) (command_arg_2_from_udp);
+
+		                        		psi_goal = (double) (command_arg_3_from_udp/* * pi / 180*/);
+		                        		if(fabs(psi_goal - sign(y_goal) * atan(fabs(y_goal / x_goal))) > pi/2)
+		                        			use2circles = 1;
+		                        		else
+		                        			use2circles = 0;
+		                        		x_goal_old = x_goal;
+		                        		y_goal_old = y_goal;
+		                        		psi_goal_old = psi_goal;
+		                        	}
+		                        	else{
+		                        		x_goal = x_goal_old;
+		                        		y_goal = y_goal_old;
+		                        		psi_goal = psi_goal_old;
+		                        	}
+
+		                        	std::cout << "Generated curve gait with: " << x_goal << "," << y_goal << "," << psi_goal << std::endl;
+
+		                        	// if(fabs(y_goal / x_goal) > 0.5 && fabs(psi_goal) < 30*pi/180)
+		                        	// {
+		                        	// 	use_default_curve = 1;
+		                        	// 	if(command_arg_3_from_udp < 10.0*pi/180 && command_arg_3_from_udp >= 0)
+		                        	// 	{
+		                        	// 		command_arg_3_from_udp = 10.0*pi/180;
+		                        	// 	}
+		                        	// 	else if(command_arg_3_from_udp <0 && command_arg_3_from_udp > -10.0*pi/180)
+		                        	// 	{
+		                        	// 		command_arg_3_from_udp = -10.0*pi/180;
+		                        	// 	}
+		                        	// }
+		                        	// else
+		                        	// {
+		                        	// 	use_default_curve = 0;
+		                        	// }
+
+	                        		// h13->calc_trajectories_walk_curve(forward, leftFootStart, x_goal, y_goal, psi_goal);
+	                        		// =============CSC==================
+		                        	all_finished = 0;
+		                        	int clockwise = 1;
+
+		                        	if(sign(y_goal) == 1){
+		                        		clockwise = 0;
+		                        	}
+
+		                        	double radius = 0.25;
+		                        	double step_width = 0.05;
+		                        	double psi_all = atan(fabs(y_goal/x_goal));
+		                        	
+
+
+		                        	double step_length = 0.15;
+	                        		double step_amount = floor(sqrt(pow(x_goal,2)+pow(y_goal,2))/step_length) + 2; // plus one because first and last are half steps
 	                        		
+	                        		std::cout << "walking: " << walking << 
+	                        		",circle1_finished: " << circle1_finished
+	                        		<< ",circle2_finished: " << circle2_finished
+	                        		<< ",straight_finished: " << straight_finished
+	                        		<< ",generate_new: " << generate_new 
+	                        		<< std::endl;
+	                        		std::cout << "step_length: " << step_length <<", step_amount: " << step_amount << ", x_goal: " << x_goal << ", y_goal: " << y_goal << std::endl;
+	                        		if(  circle1_finished == 0){ 
+	                        			std::cout << "first part" << std::endl;
+	                        			//h13->calc_trajectories_walk_circling( clockwise,  radius,  step_width,  psi_all);
+	                        			h13->calc_trajectories_walk_rotating( clockwise,  0.4, psi_all);
+	                        			
+	                        			generate_new = 0;
+
+	                        		}
+	                        		else if(  straight_finished == 0){
+	                        			std::cout << "second part" << std::endl;
+	                        			h13->calc_trajectories_walk_straight(forward, leftFootStart, step_amount, step_length);
+	                        			generate_new = 0;	                        		
+	                        		}
+	                        		else if(circle2_finished == 0){
+	                        			std::cout << "third part" << std::endl;
+
+	                        			if(clockwise == 0)
+	                        			{
+	                        				psi_all = psi_goal - psi_all;
+	                        			}else
+	                        			{
+	                        				psi_all = psi_goal + psi_all;
+	                        			}
+
+
+	                        			if(psi_all < 0)
+	                        			{
+	                        				clockwise = 1;
+	                        				if(psi_all < -pi/2)
+	                        				{
+	                        					psi_circle_2 = psi_all + pi/2;
+	                        					psi_all = pi/2;
+	                        				}
+	                        				else
+	                        				{
+	                        					psi_all = fabs(psi_all);
+	                        				}
+	                        			}
+	                        			else
+	                        			{
+	                        				clockwise = 0;
+	                        				if(psi_all > pi/2)
+	                        				{
+	                        					psi_circle_2 = psi_all - pi/2;
+	                        					psi_all = pi/2;
+	                        				}
+	                        				else
+	                        				{
+	                        					psi_all = fabs(psi_all);
+	                        				}
+	                        			}
+	                        			//std::cout << "PSI ALL = " << psi_all << "psi_circle_2 = " << psi_circle_2 << std::endl;
+	                        			// clockwise = !clockwise;
+	                        			// psi_all += psi_goal;
+	                        			h13->calc_trajectories_walk_circling( clockwise,  radius,  step_width,  psi_all);
+	                        			generate_new = 0;
+	                        		}
+	                        		else if(circle3_finished == 0 && use2circles == 1){
+	                        			if(psi_circle_2 > 0)
+	                        			{
+	                        				clockwise = 0;
+	                        			}
+	                        			else
+	                        			{
+	                        				clockwise = 1;
+	                        			}
+	                        			psi_circle_2 = fabs(psi_circle_2);
+	                        			std::cout << "fourth part" << std::endl;
+	                        			std::cout << "Clockwise: " << clockwise << ", radius: " << radius << ", step_width: " << step_width << ", PSI_2: "<< psi_circle_2 << std::endl;
+	                        			h13->calc_trajectories_walk_circling( clockwise,  radius,  step_width,  psi_circle_2);
+	                        			generate_new = 0;
+	                        		}
+	                        		//=============CSC==================
+	                        		
+									//==================================
+	                        		// prev_ID = ID;	
+	                        		walking = 1;
+	                        		prev_state = 5;
+
 	                        	}
 	                        	else{
+
 	                        		walking = h13->walk(dxl_actuator, gait_packet);
-												// Log the data and send via udp
 	                        		GetSocketData(time-time_zero,dxl_actuator);
 	                        		SendData();
+								//=============CSC==================	                        		
+
+	                        		if(all_finished == 0 &&walking == 0 && circle1_finished == 0){
+
+	                        			// Initial
+	                        			circle1_finished = 1;
+	                        			walking = 1;
+	                        			generate_new = 1;
+	                        			std::cout << "Circle 1 finished " << std::endl;
+	                        			odom_x_curve_temp = 0;
+	                        			odom_y_curve_temp = 0;
+	                        			odom_psi_curve_temp = 0;
+
+	                        			odom_x_curve_temp 		= odom_x_curve_temp 	+ h13->body_x * cos(odom_psi_curve_temp) - h13->body_y * sin(odom_psi_curve_temp);
+	                        			odom_y_curve_temp 		= odom_y_curve_temp 	+ h13->body_y * cos(odom_psi_curve_temp) + h13->body_x * sin(odom_psi_curve_temp);
+	                        			odom_psi_curve_temp 	= odom_psi_curve_temp 	+ h13->body_psi;
+	                        			// std::cout << "walking: " << walking << 
+	                        			// ",circle1_finished: " << circle1_finished
+	                        			// << ",circle2_finished: " << circle2_finished
+	                        			// << ",straight_finished: " << straight_finished
+	                        			// << ",generate_new: " << generate_new 
+	                        			// << std::endl;
+
+	                        		}
+	                        		else if(all_finished == 0&& walking == 0 && straight_finished == 0){
+	                        			straight_finished = 1;
+	                        			walking = 1;
+	                        			generate_new = 1;
+	                        			std::cout << "Straight 1 finished " << std::endl;
+
+	                        			odom_x_curve_temp 		= odom_x_curve_temp 	+ h13->body_x * cos(odom_psi_curve_temp) - h13->body_y * sin(odom_psi_curve_temp);
+	                        			odom_y_curve_temp 		= odom_y_curve_temp 	+ h13->body_y * cos(odom_psi_curve_temp) + h13->body_x * sin(odom_psi_curve_temp);
+	                        			odom_psi_curve_temp 	= odom_psi_curve_temp 	+ h13->body_psi;
+	                        			// std::cout << "walking: " << walking << 
+	                        			// ",circle1_finished: " << circle1_finished
+	                        			// << ",circle2_finished: " << circle2_finished
+	                        			// << ",straight_finished: " << straight_finished
+	                        			// << ",generate_new: " << generate_new 
+	                        			// << std::endl;
+
+	                        		}
+	                        		else if(all_finished == 0 && walking == 0 && circle2_finished == 0 ){
+	                        			// walking = 0;
+	                        			if(use2circles == 0){
+	                        				circle1_finished = 0;
+	                        				straight_finished = 0;
+	                        				circle2_finished = 0;
+	                        				all_finished = 1;
+
+	                        				odom_x_curve_temp = 0;
+		                        			odom_y_curve_temp = 0;
+		                        			odom_psi_curve_temp = 0;
+	                        				
+	                        			}else
+	                        			{
+	                        				odom_x_curve_temp 		= odom_x_curve_temp 	+ h13->body_x * cos(odom_psi_curve_temp) - h13->body_y * sin(odom_psi_curve_temp);
+	                        				odom_y_curve_temp 		= odom_y_curve_temp 	+ h13->body_y * cos(odom_psi_curve_temp) + h13->body_x * sin(odom_psi_curve_temp);
+	                        				odom_psi_curve_temp 	= odom_psi_curve_temp 	+ h13->body_psi;
+	                        				walking = 1;
+	                        				circle2_finished = 1;
+	                        			}
+	                        			generate_new = 1;
+	                        			std::cout << "Circle 2 finished " << std::endl;
+	                        			// std::cout << "walking: " << walking << 
+	                        			// ",circle1_finished: " << circle1_finished
+	                        			// << ",circle2_finished: " << circle2_finished
+	                        			// << ",straight_finished: " << straight_finished
+	                        			// << ",generate_new: " << generate_new 
+	                        			// << std::endl;
+	                        		}
+	                        		else if(all_finished == 0 && walking == 0 && circle3_finished == 0 && use2circles == 1 ){
+	                        			// 
+	                        			circle1_finished = 0;
+	                        			straight_finished = 0;
+	                        			circle2_finished = 0;
+	                        			circle3_finished = 0;
+
+	                        			generate_new = 1;
+	                        			all_finished = 1;
+
+                        				odom_x_curve_temp = 0;
+	                        			odom_y_curve_temp = 0;
+	                        			odom_psi_curve_temp = 0;
+	                        			
+	                        			std::cout << "Circle 3 finished " << std::endl;
+	                        			// std::cout << "walking: " << walking << 
+	                        			// ",circle1_finished: " << circle1_finished
+	                        			// << ",circle2_finished: " << circle2_finished
+	                        			// << ",straight_finished: " << straight_finished
+	                        			// << ",generate_new: " << generate_new 
+	                        			// << std::endl;
+	                        		}
+
+	                        		else{
+	                        			// std::cout << "walking: " << walking << 
+	                        			// "circle1_finished: " << circle1_finished
+	                        			// << "circle2_finished: " << circle2_finished
+	                        			// << "straight_finished: " << straight_finished
+	                        			// << "generate_new: " << generate_new 
+	                        			// << std::endl;
+	                        			// std::cout << "walr"
+	                        			// std::cout << "shouldnt exist" << std::endl;
+	                        		}
+										                        		//std::cout << "TempX = " << odom_x_curve_temp << "TempY = " << odom_y_curve_temp << "TempPsi" << odom_psi_curve_temp <<endl;
+
+												// Log the data and send via udp
+	                      
 	                        	}
-	                        	std::cout << "i: " << h13->get_time_step() << ",state: " << h13->get_walking_state() << std::endl;
+	                        	// if(useVision == 0)
+	                        	// std::cout << "i: " << h13->get_time_step() << ",state: " << h13->get_walking_state() << std::endl;
 	                        }
-	                        else if(broadcast.InputPacket[0] == 6)//Circling clockwise
+	                        else if(command_type_from_udp == 6)//Circling clockwise
 	                        {	
-	                        	std::cout << "state: " << h13->get_walking_state() << std::endl;
-	                        	if(walking == 0 && ( prev_ID != ID )){ //|| h13->get_walking_state() != 6)){	   
-                     	//==================
+	                        	if(useVision == 0)
+	                        		std::cout << "state: " << h13->get_walking_state() << std::endl;
+	                        	if(walking == 0 && walking_enable == 1){ //|| h13->get_walking_state() != 6)){	   
+    		                 	//==================
 	                        		h13->erase_trajectories();
 
 	                        		if(!bIsWalkStart)
@@ -1433,12 +1940,21 @@ while(1)
 
 
 	                        		double step_width = 0.1;
-	                        		int clockwise = 1;
-	                        		double radius = (double) (broadcast.InputPacket[1]);
-	                        		double psi_all = (double) fabs((broadcast.InputPacket[2]));
+	                        		int clockwise 	= 1;
+	                        		double radius 	= (double) fabs(command_arg_1_from_udp);
+	                        		double psi_all 	= (double) fabs(command_arg_2_from_udp);
+	                        		if(radius <= 0.15)
+	                        		{
+	                        			radius = 0.15;
+	                        		}
+	                        		if(psi_all >= pi/2)
+	                        		{
+	                        			psi_all = pi/2;
+	                        		}
 	                        		std::cout << "Generated clockwise circling gait with step_width: " << step_width << ", radius: " << radius << ", psi_goal: " << psi_all << std::endl;
 	                        		h13->calc_trajectories_walk_circling( clockwise,  radius,  step_width,  psi_all);
-	                        		prev_ID = ID;
+	                        		// prev_ID = ID;	
+	                        		walking = 1;
 
 
 								//======================
@@ -1450,12 +1966,15 @@ while(1)
 	                        		GetSocketData(time-time_zero,dxl_actuator);
 	                        		SendData();
 	                        	}
+	                        	prev_state = 6;
 	                        }
-	                        else if(broadcast.InputPacket[0] == 7)//Circling anticlockwise
+	                        else if(command_type_from_udp == 7)//Circling anticlockwise
 	                        {
-	                        	// std::cout << "state: " << h13->get_walking_state() << std::endl;
 
-	                        	if(walking == 0 && ( prev_ID != ID )){ //|| h13->get_walking_state() != 7)){	                  
+	                        	if(useVision == 0)
+	                        		std::cout << "state: " << h13->get_walking_state() << std::endl;
+
+	                        	if(walking == 0 && walking_enable == 1 ){ //|| h13->get_walking_state() != 7)){	                  
       							//==================
 	                        		h13->erase_trajectories();
 
@@ -1467,11 +1986,22 @@ while(1)
 
 	                        		double step_width = 0.08;
 	                        		int clockwise = 0;
-	                        		double radius = (double) (broadcast.InputPacket[1]);
-	                        		double psi_all = (double) fabs((broadcast.InputPacket[2]));
+	                        		double radius = (double) (command_arg_1_from_udp);
+	                        		double psi_all = (double) fabs((command_arg_2_from_udp));
 	                        		std::cout << "Generated anticlockwise circling gait with step_width: " << step_width << ", radius: " << radius << ", psi_goal: " << psi_all << std::endl;
+	                        		
+	                        		if(radius <= 0.15)
+	                        		{
+	                        			radius = 0.15;
+	                        		}
+	                        		if(psi_all >= pi/2)
+	                        		{
+	                        			psi_all = pi/2;
+	                        		}
+
 	                        		h13->calc_trajectories_walk_circling( clockwise,  radius,  step_width,  psi_all);
-	                        		prev_ID = ID;
+	                        		// prev_ID = ID;	
+	                        		walking = 1;
 
 								//======================
 	                        		
@@ -1482,16 +2012,93 @@ while(1)
 	                        		GetSocketData(time-time_zero,dxl_actuator);
 	                        		SendData();
 	                        	}
+	                        	prev_state = 7;
+	                        }else if(command_type_from_udp == 16)//Circling clockwise
+	                        {	
+	                        	if(useVision == 0)
+	                        		std::cout << "state: " << h13->get_walking_state() << std::endl;
+	                        	if(walking == 0 && walking_enable == 1){ //|| h13->get_walking_state() != 6)){	   
+     		                	//==================
+	                        		h13->erase_trajectories();
+
+	                        		if(!bIsWalkStart)
+	                        		{
+	                        			time_zero=time;
+	                        			bIsWalkStart=true;
+	                        		}
+
+
+	                        		int clockwise 	= 1;
+	                        		double psi_max 	= (double) fabs(command_arg_1_from_udp);
+	                        		double psi_all 	= (double) fabs(command_arg_2_from_udp);
+	                        		
+	                        		std::cout << "Generated clockwise circling gait with psi_max: " << psi_max << ", psi_all: " << psi_all << std::endl;
+	                        		h13->calc_trajectories_walk_rotating( clockwise,  psi_max, psi_all);
+	                        		// prev_ID = ID;	
+	                        		walking = 1;
+
+
+								//======================
+	                        		
+	                        	}
+	                        	else{
+	                        		walking = h13->walk(dxl_actuator, gait_packet);
+												// Log the data and send via udp
+	                        		GetSocketData(time-time_zero,dxl_actuator);
+	                        		SendData();
+	                        	}
+	                        	prev_state = 16;
+	                        }else if(command_type_from_udp == 17)//Circling clockwise
+	                        {	
+	                        	if(useVision == 0)
+	                        		std::cout << "state: " << h13->get_walking_state() << std::endl;
+	                        	if(walking == 0 && walking_enable == 1){ //|| h13->get_walking_state() != 6)){	   
+                		     	//==================
+	                        		h13->erase_trajectories();
+
+	                        		if(!bIsWalkStart)
+	                        		{
+	                        			time_zero=time;
+	                        			bIsWalkStart=true;
+	                        		}
+
+
+	                        		int clockwise 	= 0;
+	                        		double psi_max 	= (double) fabs(command_arg_1_from_udp);
+	                        		double psi_all 	= (double) fabs(command_arg_2_from_udp);
+	                        		
+	                        		std::cout << "Generated clockwise circling gait with psi_max: " << psi_max << ", psi_all: " << psi_all << std::endl;
+	                        		h13->calc_trajectories_walk_rotating(clockwise,  psi_max, psi_all);
+	                        		// prev_ID = ID;	
+	                        		walking = 1;
+
+
+								//======================
+	                        		
+	                        	}
+	                        	else{
+	                        		walking = h13->walk(dxl_actuator, gait_packet);
+												// Log the data and send via udp
+	                        		GetSocketData(time-time_zero,dxl_actuator);
+	                        		SendData();
+	                        	}
+	                        	prev_state = 17;
 	                        }
-	                        else if(broadcast.InputPacket[0] == 8)//Kicking
+	                        else if(command_type_from_udp == 8)//Kicking
 	                        {
-	                        	// std::cout << "kicking" << std::endl;
-	                        	// std::cout << "command type: " << broadcast.InputPacket[0] <<std::endl;
+	                        	// std::cout << "in 8" << std::endl;
 	                        	// h13->stop(dxl_actuator, gait_packet);
-	                        	// std::cout << "id: " << ID << ",prev id: " << prev_ID << std::endl;
-	                        	// std::cout << "walking: " << walking << std::endl;
-	                        	if(walking == 0 && ( prev_ID !=ID) ){ // || h13->get_walking_state() != 8)){	
-                        	//==================
+	                        	std::cout << "Kicking Warning = " << kick_warning <<std::endl;
+	                        	if(kick_warning == 1){
+	                        			                        	std::cout << " Walking == " << walking << " prev_state" << prev_state << std::endl;
+
+	                        	}
+                        		//==================
+
+                        		if(walking == 0  &&  prev_state != 8){ // || h13->get_walking_state() != 8)){	
+
+	                        		std::cout << "Clear Kick Warning " << std::endl;
+	                        		kick_warning = 0;
 	                        		h13->erase_trajectories();
 	                        		std::cout << "Kick generated " << std::endl;
 	                        		if(!bIsWalkStart)
@@ -1499,28 +2106,37 @@ while(1)
 	                        			time_zero=time;
 	                        			bIsWalkStart=true;
 	                        		}
-									//kick Parameters
-	                        		bool leftKick = broadcast.InputPacket[1];
-	                        		int kick_type = broadcast.InputPacket[2];
-									kick_type = KICK_PENALTY_LEFT; // kickType
-	                        		double kicking_angle = broadcast.InputPacket[2];
-	                        		double camera_x = 235.15;
-									double camera_y = 336;
-<<<<<<< HEAD
-									//h13->kick(kick_type, camera_x, camera_y);
-									h13->highkick();
-=======
-									h13->kick(kick_type, camera_x, camera_y);
+	                        		bool leftKick = command_arg_1_from_udp;
+	                        		int kick_type = (int) command_arg_2_from_udp;
+	                        		// std::cout << "cmd4" << command_arg_4_from_udp << std::endl;
+	                        		// std::cout << "cmd5" << command_arg_5_from_udp << std::endl;
 
->>>>>>> 9ac890f44e7798dce439092f5d5205afe2111bf9
+	                        		double camera_x = (double) command_arg_4_from_udp;
+									double camera_y = (double) command_arg_5_from_udp;
+	                        		// double kicking_angle = command_arg_3_from_udp;
+	                        		// std::cout << "camer x: " << camera_x, 
+	                        		double kicking_angle = 0;
 
+	                        		// h13->kick(leftKick,kick_type,kicking_angle);
+	                        		std::cout<<"camera_x"<<camera_x<<"camera_y"<<camera_y<<std::endl;
+									if(true == h13->kick( kick_type, camera_x, camera_y, kicking_angle))
+									{
+										kick_warning = 0;
+									}else
+									{
+										kick_warning = 1;
+									}
+
+									
 	                        		// double step_width = 0.1;
 	                        		// std::cout << "erase and walking " << std::endl;
 	                        		// h13->stopGait();
 	                        		// h13->kick_generation();
-	                        		prev_ID = ID;
+	                        		// prev_ID = ID;	
+	                        		walking = 1;
 
 								//======================
+	                        		prev_state = 8;
 	                        		
 	                        	}
 	                        	else{
@@ -1532,12 +2148,34 @@ while(1)
 	                        		SendData();
 	                        	}
 	                        }
-	                        else if(broadcast.InputPacket[0] == 99){
+	                        else if(command_type_from_udp == 99){
 	                        	h13->stop(dxl_actuator, gait_packet);
-
+	                        	GetSocketData(time-time_zero,dxl_actuator);
+	                        	SendData();
+	                        	prev_state = 99;
 	                        }
 
 
+	                        if(walking == 1 && command_type_from_udp != 5){
+
+	                        	odom_x 		= h13->body_x;
+	                        	odom_y 		= h13->body_y;
+	                        	odom_psi 	= h13->body_psi;	
+	                        }
+	                        else if(walking == 1 && command_type_from_udp == 5){
+	                        	odom_x 		= odom_x_curve_temp 	+ h13->body_x * cos(odom_psi_curve_temp) - h13->body_y * sin(odom_psi_curve_temp);
+	                        	odom_y 		= odom_y_curve_temp 	+ h13->body_y * cos(odom_psi_curve_temp) + h13->body_x * sin(odom_psi_curve_temp);
+	                        	odom_psi 	= odom_psi_curve_temp	+ h13->body_psi;
+	                        	//Write in Curve func.
+	                        }
+	                        else
+	                        {
+	                       	    odom_x 		= 0;
+	                        	odom_y 		= 0;
+	                        	odom_psi 	= 0; 	
+	                        }
+	                        std::cout << "X = " << odom_x << "Y = " << odom_y << "Psi = " << odom_psi <<std::endl;
+	                        	
 //==========================================================GAIT END =========================
                             //printf("traj_theta[0]: %f\t traj_theta[1]: %f\t  traj_theta[2]: %f\t \n",(dxl_actuator)->traj_theta,(dxl_actuator+1)->traj_theta,(dxl_actuator+2)->traj_theta);
 
@@ -1553,24 +2191,74 @@ while(1)
 
 /*==================COMMENT OUT FOR OFFLINE==================*/
 	                        if(run_dxl == 1){
+
+	                        	if((dxl_actuator[0].comm_result != 0)&&(flag_comm_result_fail_continuous == 0))
+	                        	{
+	                        		comm_result_fail_count++;
+	                        		flag_comm_result_fail_continuous = 1;
+	                        	}
+	                        	else if((dxl_actuator[0].comm_result != 0)&&(flag_comm_result_fail_continuous == 1))
+	                        	{
+	                        		comm_result_fail_count++;
+	                        	}
+	                        	else
+	                        	{
+	                        		comm_result_fail_count = 0;
+	                        		flag_comm_result_fail_continuous = 0;
+	                        	}
+
+	                        	
+     		                   //  if(dxl_actuator[0].comm_result != 0)
+	                        	// {
+	                        	// 	counter_lose_paket++;			
+	                        	// }
+
 	                        	for(int i=0;i<DXL_NUM;i++)
 	                        	{
-	                        		if(dxl_actuator[0].comm_result == 0){
-	                        			dxl_actuator[i].goal_torque = (int32_t)(pid_controller[i].PID_getOut());
-                                	// std::cout << "Read and write success" << std::endl;
-	                        		}
-	                        		else{
-	                        			dxl_actuator[i].goal_torque = (int32_t)(0);
-	                        			printf("Comm results of %d was unsuccessful: %d \n", i, dxl_actuator[0].comm_result);
-	                        		}
 
-	                        		if ((dxl_actuator[i].flag_theta_InRange == 0) || (dxl_actuator[i].flag_delta_theta_InRange == 0)){
+
+            		          		// if(counter_lose_paket <= 5){
+	                        	// 		dxl_actuator[i].goal_torque = (int32_t)(pid_controller[i].PID_getOut());
+                          //       	// std::cout << "Read and write success" << std::endl;
+	                        	// 	}
+	                        	// 	else{
+	                        	// 		dxl_actuator[i].goal_torque = (int32_t)(0);
+	                        	// 		printf("Comm results of %d was unsuccessful: %d \n", i, dxl_actuator[0].comm_result);
+	                        	// 	}
+
+
+
+	                        	// 	//if ((dxl_actuator[i].flag_theta_InRange == 0) || (dxl_actuator[i].flag_delta_theta_InRange == 0)){
+	                        	// 	//	for(int k=0;k<DXL_NUM;k++)
+	                        	// 	//	{
+	                        	// 	//		dxl_actuator[k].goal_torque = (int32_t)(0);
+	                        	// 	//	}				
+	                        	// 	//	flag_motion_thread_stop = 1;					
+	                        	// 	//	printf("Theta %d In range: Theta %d, DeltaTheta %d \n", i, dxl_actuator[i].flag_theta_InRange, dxl_actuator[i].flag_delta_theta_InRange);
+	                        	// 	//}
+
+	                        	// 	if ((counter_theta_out_of_range >= 8) || (counter_delta_theta_out_of_range >= 8)){
+	                        	// 		for(int k=0;k<DXL_NUM;k++)
+	                        	// 		{
+	                        	// 			dxl_actuator[k].goal_torque = (int32_t)(0);
+	                        	// 		}				
+	                        	// 		flag_motion_thread_stop = 1;					
+	                        	// 		//printf("Theta %d In range: Theta %d, DeltaTheta %d \n", i, dxl_actuator[i].flag_theta_InRange, dxl_actuator[i].flag_delta_theta_InRange);
+	                        	// 	}
+
+	                        		//added by lichunjing 2017-06-21
+	                        		if((theta_out_of_range_count > 5)||(delta_theta_out_of_range_count > 5)||(comm_result_fail_count > 5))
+	                        		{
 	                        			for(int k=0;k<DXL_NUM;k++)
 	                        			{
 	                        				dxl_actuator[k].goal_torque = (int32_t)(0);
 	                        			}				
-	                        			flag_motion_thread_stop = 1;					
-	                        			printf("Theta %d In range: Theta %d, DeltaTheta %d \n", i, dxl_actuator[i].flag_theta_InRange, dxl_actuator[i].flag_delta_theta_InRange);
+	                        			flag_motion_thread_stop = 1;
+	                        			printf("theta_out_of_range_count=%d, delta_theta_out_of_range_count=%d, comm_result_fail_count=%d\n",theta_out_of_range_count, delta_theta_out_of_range_count, comm_result_fail_count);
+	                        		}
+	                        		else
+	                        		{
+	                        			dxl_actuator[i].goal_torque = (int32_t)(pid_controller[i].PID_getOut());
 	                        		}
 
 
@@ -1580,7 +2268,7 @@ while(1)
 	                        	// std::cout << "i: " << i << ", pos: " << dxl_actuator[i].get_present_theta() << ", torque: " << dxl_actuator[i].goal_torque << std::endl;
 
                                 //******************************************************************************************
-                                // dxl_actuator[i].goal_torque = (int32_t)(0);
+                                 //dxl_actuator[i].goal_torque = (int32_t)(0);
                                 //******************************TORQUE ENABLE ZERO*******************************************
 
 	                        	}
@@ -1685,6 +2373,12 @@ while(1)
 ////////////////////////////////////////  DXL UP BODY MOTION THREAD  /////////////////////////////////////////
 void* motion_upbody(void* data) 
 {
+	float present_theta = 0.0;
+	float goal_theta = 0.0;
+
+	broadcast_vision.InputPacket[4] = 0.0;
+	broadcast_vision.InputPacket[5] = 25.0;
+	broadcast_vision.InputPacket[6] = 0.0;  //waist-yaw
 
 	PortHandler *dxl_portHandler;
 	dxl_portHandler = new PortHandler(dxl_upbody_port_name);
@@ -1701,32 +2395,66 @@ void* motion_upbody(void* data)
 		dxl_actuator_upbody[i].Set_Mode_Position(dxl_portHandler, dxl_packetHandler);	
 	}
 
-	for(int i=0;i<5;i++)
-	{
-		dxl_actuator_upbody[i].goto_theta_mode_position(dxl_portHandler, dxl_packetHandler, 0.0);
-	}
+	// for(int i=0;i<4;i++)
+	// {
+	// 	dxl_actuator_upbody[i].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, 0.0);
+	// }
+	dxl_actuator_upbody[0].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, 40.0);
+	dxl_actuator_upbody[1].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, -5.0);
+	dxl_actuator_upbody[2].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, -40.0);
+	dxl_actuator_upbody[3].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, 5.0);
 
-	dxl_actuator_upbody[5].goto_theta_mode_position(dxl_portHandler, dxl_packetHandler, 0.0);
-	dxl_actuator_upbody[6].goto_theta_mode_position(dxl_portHandler, dxl_packetHandler, 25.0);
+	dxl_actuator_upbody[4].goto_theta_mode_position_200w(dxl_portHandler, dxl_packetHandler, 0.0);   //waist-yaw
+	dxl_actuator_upbody[5].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, 0.0);
+	dxl_actuator_upbody[6].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, 25.0);
+	dxl_actuator_upbody[7].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, 115.0);  //left hand elbow
+	dxl_actuator_upbody[8].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, -115.0);  //right hand elbow
 
+
+    usleep(1000000);
 
 	while(1)
 	{
-		usleep(1000000);
+		usleep(20000);
+
+		if(broadcast_vision.InputPacket[6] > present_theta){
+
+			goal_theta = present_theta + 1;	
+			std::cout << " larger " << std::endl;
+			
+		}
+		else if(broadcast_vision.InputPacket[6] < present_theta){
+			goal_theta = present_theta - 1;
+			std::cout << "smaller " << std::endl;
+		}
+		else if(fabs(broadcast_vision.InputPacket[6] - present_theta) <= 1){
+			goal_theta = broadcast_vision.InputPacket[6];
+		}
+
+		// printf("goal_theta = %f,present_theta=%f, InputPacket[6]=%f\n",goal_theta, present_theta, broadcast_vision.InputPacket[6]);
+
+
 
 		if(flag_motion_upbody_thread_stop == 0)
 		{
+			dxl_actuator_upbody[4].goto_theta_mode_position_200w(dxl_portHandler, dxl_packetHandler, goal_theta);   //waist-yaw
+			present_theta = goal_theta;
 
-		}
-		else
-		{
-			for(int i=0;i<DXL_NUM_UPBODY;i++)
-			{
-				dxl_actuator_upbody[i].Torque_Disable(dxl_portHandler, dxl_packetHandler);
-			}
-			printf("6. motion upbody thread exit safely!\n");
-			pthread_exit(0);
-		}
+			dxl_actuator_upbody[5].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, broadcast_vision.InputPacket[4]);   //head-yaw
+	        dxl_actuator_upbody[6].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, broadcast_vision.InputPacket[5]);   //head-pitch
+
+	        dxl_actuator_upbody[1].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, 5.0);
+	        dxl_actuator_upbody[3].goto_theta_mode_position_50w(dxl_portHandler, dxl_packetHandler, -5.0);
+	    }
+	    else
+	    {
+	    	for(int i=0;i<DXL_NUM_UPBODY;i++)
+	    	{
+	    		dxl_actuator_upbody[i].Torque_Disable(dxl_portHandler, dxl_packetHandler);
+	    	}
+	    	printf("6. motion upbody thread exit safely!\n");
+	    	pthread_exit(0);
+	    }
 	}
 
 	// printf("1111111111111111111\n");
@@ -1768,6 +2496,23 @@ void* listen(void * data)
 			{
 				broadcast.ReceiveExecuted=true;
 				//printf("Communication: Rcv: %f\n",broadcast.InputPacket[0]);
+				if(useVision == 0)
+				{
+					command_type_from_udp 	= (int)		broadcast.InputPacket[0];	//If 1 == USE VISON UDP, ELSE USE CMD.
+					command_arg_1_from_udp	= (float)	broadcast.InputPacket[1];
+					command_arg_2_from_udp	= (float)	broadcast.InputPacket[2];
+					command_arg_3_from_udp 	= (float)	broadcast.InputPacket[3];
+					command_arg_4_from_udp 	= (float)	broadcast.InputPacket[7];
+					command_arg_5_from_udp 	= (float)	broadcast.InputPacket[8];
+
+					// std::cout << "cmd 4: "<< broadcast.InputPacket[7] << std::endl;
+					// std::cout << "cmd 45 "<< broadcast.InputPacket[8] << std::endl;
+
+				}
+				else
+				{
+					;//BLANK
+				}
 			}
 			else
 				printf("UDPRcv Error!\n");
@@ -1820,12 +2565,27 @@ void* listen_vision_ctrl(void * data)
 
 			// 	printf("command_type:%d  ", command_type[0]);
 
+			// usleep(1000000);
 
 			count=UDPRcv(broadcast_vision.inputSocket,broadcast_vision.InputPacket,sizeof(broadcast_vision.InputPacket));		
 			if(count!=-1)
 			{
 				broadcast_vision.ReceiveExecuted=true;
-				//printf("Communication: Rcv: %f\n",broadcast.InputPacket[0]);
+				
+				if(useVision == 1)
+				{
+					command_type_from_udp 	= (int)		broadcast_vision.InputPacket[0];	//If 1 == USE VISON UDP, ELSE USE CMD.
+					command_arg_1_from_udp	= (float)	broadcast_vision.InputPacket[1];
+					command_arg_2_from_udp	= (float)	broadcast_vision.InputPacket[2];
+					command_arg_3_from_udp 	= (float)	broadcast_vision.InputPacket[3];
+					command_arg_4_from_udp 	= (float)	broadcast_vision.InputPacket[7];
+					command_arg_5_from_udp 	= (float)	broadcast_vision.InputPacket[8];
+
+				}
+				else
+				{
+					;//BLANK
+				}
 			}
 			else
 				printf("UDPRcv Error!\n");
@@ -1833,8 +2593,8 @@ void* listen_vision_ctrl(void * data)
 			{
 				printf("1. comm thread exit safely!\n");
 
-				GetVisionData(-1000);
-				SendVisionData();		
+				// GetVisionData(-1000);
+				// SendVisionData();		
 				flag_motion_thread_stop = 1;
 				flag_motion_upbody_thread_stop = 1;
 				flag_ati_thread_stop = 1;
@@ -1844,18 +2604,20 @@ void* listen_vision_ctrl(void * data)
 				pthread_exit(0); 
 			}
 
-			for(int i=0;i<5;i++)
+			for(int i=0;i<11;i++)
 			{
-				printf("Packet[%d]:%f  ", i, broadcast_vision.InputPacket[i]);
+				printf("Packet[%d]:%f \n ", i, broadcast_vision.InputPacket[i]);
 			}
+
 			printf("\n");
 
-			printf("111111111\n");
+			// printf("111111111\n");
 
-			GetVisionData(111);	
+			GetVisionData(666);	
 			SendVisionData();
 
-			printf("22222222222\n");
+
+			// printf("22222222222\n");
 		}
 		else
 		{
@@ -1897,7 +2659,7 @@ int main(int argc, char*argv[])
     //init();
 	if(nATI == 1)
 	{
-		pthread_create(&th_sr_ati_1, NULL, sensorATI_1, 0);
+		// pthread_create(&th_sr_ati_1, NULL, sensorATI_1, 0);
 		pthread_create(&th_sr_ati_2, NULL, sensorATI_2, 0);
 	}
 
@@ -1930,7 +2692,7 @@ int main(int argc, char*argv[])
 
 	if(nATI == 1)
 	{
-		pthread_join(th_sr_ati_1, &retval);
+		// pthread_join(th_sr_ati_1, &retval);
 		pthread_join(th_sr_ati_2, &retval);
 	}
 

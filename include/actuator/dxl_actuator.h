@@ -118,7 +118,8 @@ class dxl_Actuator
 		void  SetZeroPos(float fz);
 		void  SetDir(int nd);
 
-		void  goto_theta_mode_position(PortHandler *dxl_portHandler, dxl_PacketHandler *dxl_packetHandler, float theta);
+		void  goto_theta_mode_position_50w(PortHandler *dxl_portHandler, dxl_PacketHandler *dxl_packetHandler, float theta);
+		void  goto_theta_mode_position_200w(PortHandler *dxl_portHandler, dxl_PacketHandler *dxl_packetHandler, float theta);
 };
 
 

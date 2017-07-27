@@ -1,0 +1,41 @@
+clear
+clc
+close all
+t_dsp = 0.5;
+t_half = 0.5;
+ratio = t_dsp / t_half;
+tx_sample = [0,0.01,0.5,0.99,1];
+x_sample = [0,0, 0.5,1,1];
+t_lin = linspace(0, 1, 1000);
+x_lin = spline(tx_sample, x_sample, t_lin);
+
+
+
+tz_sample = [0, 0.01,0.1, 0.5,0.9, 0.99, 1];
+z_sample = [0, 0,0.5,0.9,0.5, 0, 0];
+z_lin = spline(tz_sample, z_sample, t_lin);
+
+figure
+subplot(3,1,1)
+plot(tx_sample, x_sample, 'x')
+hold on
+grid on
+grid minor
+plot(t_lin, x_lin, '.')
+ylim([-0.1, 1.2])
+line([t_dsp t_dsp], [-0.1 1.2])
+title('t over x')
+subplot(3,1,2)
+plot(tz_sample, z_sample, 'x')
+hold on
+grid on
+grid minor
+plot(t_lin, z_lin, '.')
+ylim([-0.1, 1.2])
+line([t_dsp t_dsp], [-0.1 1.2])
+title('t over z')
+subplot(3,1,3)
+plot(x_lin, z_lin, '.')
+grid on
+grid minor
+title('x over z')

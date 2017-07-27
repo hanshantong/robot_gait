@@ -304,9 +304,23 @@ void dxl_Actuator::SetDir(int nd)
 	nDir = nd;
 }
 
-void  dxl_Actuator::goto_theta_mode_position(PortHandler *dxl_portHandler, dxl_PacketHandler *dxl_packetHandler, float theta)
+void  dxl_Actuator::goto_theta_mode_position_50w(PortHandler *dxl_portHandler, dxl_PacketHandler *dxl_packetHandler, float theta)
 {
 	int positon = (int)(theta / DXL_PRO_20_UNIT);
+	comm_result = dxl_packetHandler->write4ByteTxRx(dxl_portHandler, id, ADDR_GOAL_POSITION, positon, &error);
+	if (comm_result != COMM_SUCCESS)
+	{
+		dxl_packetHandler->printTxRxResult(comm_result);
+	}
+	else if (error != 0)
+	{
+		dxl_packetHandler->printRxPacketError(error);
+	}
+}
+
+void  dxl_Actuator::goto_theta_mode_position_200w(PortHandler *dxl_portHandler, dxl_PacketHandler *dxl_packetHandler, float theta)
+{
+	int positon = (int)(theta / REG_VALUE_TO_DEGREE_TO_SF);
 	comm_result = dxl_packetHandler->write4ByteTxRx(dxl_portHandler, id, ADDR_GOAL_POSITION, positon, &error);
 	if (comm_result != COMM_SUCCESS)
 	{

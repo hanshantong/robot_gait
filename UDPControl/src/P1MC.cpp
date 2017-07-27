@@ -41,7 +41,7 @@
 #include <sys/stat.h>
 #include <arpa/inet.h>
 int ID = 0;
-
+int prevID;
 int getch()
 {
 #ifdef __linux__
@@ -100,7 +100,7 @@ int kbhit(void)
 /////////////////////////////////////Socket Init /////////////////////////////////////////////
 typedef struct {
 	char robotID;
-	float OutputPacket[5];//the content of this packet
+	float OutputPacket[10];//the content of this packet
 	float InputPacket[160];
 	bool ReceiveExecuted;//updated means that receiver can receive information
 	bool SendExecuted;//true means that receiver has received the information,and the sender can send;false means the sender is sending
@@ -158,7 +158,7 @@ FLOAT33: mti_Roll
 bool bIsRecData = false;
 Broadcast broadcast;
 int outputPort=51655;
-int inputPort=51658;
+int inputPort=51600;
 int UDPSocket(int port){
 	int sockfd;							//定义socket套接字
 	struct sockaddr_in sin; 					//定义网络套接字地址结构
@@ -224,11 +224,12 @@ void SendData()
 {
 	int count=-1;	
 	count= UDPSend(broadcast.outputSocket,broadcast.OutputPacket,sizeof(broadcast.OutputPacket),"127.0.0.1",51654);	
-	// count= UDPSend(broadcast.outputSocket,broadcast.OutputPacket,sizeof(broadcast.OutputPacket),"192.168.0.101",51654);	
+	// count= UDPSend(broadcast.outputSocket,broadcast.OutputPacket,sizeof(broadcast.OutputPacket),"192.168.8.39",51654);	
 
 	// count= UDPSend(broadcast.outputSocket,broadcast.OutputPacket,sizeof(broadcast.OutputPacket),"101.5.220.130",51654);	
 
-	if(count ==-1)printf("Communication: UDPSend Error!\n"); 
+	if(count ==-1)
+		printf("Communication: UDPSend Error!\n"); 
 
 }
 
@@ -299,7 +300,10 @@ void* send(void * data)
 	{	
 		printf("press ESC to exit!\n");
 		std::cin >> nFloat0;
-		ID++;
+		// if(nFloat0 != 99){
+		// 	ID++;
+		// }
+
 		if (getch() == ESC_ASCII_VALUE)
 		{			
 			if(bIsRecData)			
@@ -321,14 +325,14 @@ void* send(void * data)
 				nFloat0 = 1; // Straight forwards
 				printf(" (Straight: %d) \n", nFloat0);
 				// broadcast.OutputPacket[1] = 1; // Forward
-				broadcast.OutputPacket[1] = 20; // Step amount
+				broadcast.OutputPacket[1] = 11; // Step amount
 				broadcast.OutputPacket[2] = 0.15; // Step length
 			}
 			else if(nFloat0 == 2){
 				nFloat0 = 2; // Straight backwards
 				printf(" (Straight: %d) \n", nFloat0);
 				// broadcast.OutputPacket[1] = 1; // Forward
-				broadcast.OutputPacket[1] = 3; // Step amount
+				broadcast.OutputPacket[1] = 7; // Step amount
 				broadcast.OutputPacket[2] = 0.15; // Step length
 			}
 			else if (nFloat0 == 3)
@@ -337,7 +341,7 @@ void* send(void * data)
 				printf(" (Side: %d) \n", nFloat0);
 				// broadcast.OutputPacket[1] = 1; // Going left
 				broadcast.OutputPacket[1] = 11; // Step amount. Needs to be odd
-				broadcast.OutputPacket[2] = 0.07; // Step width
+				broadcast.OutputPacket[2] = 0.10; // Step width
 
 			}
 			else if (nFloat0 == 4)
@@ -346,22 +350,22 @@ void* send(void * data)
 				printf(" (Side: %d) \n", nFloat0);
 				// broadcast.OutputPacket[1] = 1; // Going left
 				broadcast.OutputPacket[1] = 11; // Step amount. Needs to be odd
-				broadcast.OutputPacket[2] = 0.07; // Step width
+				broadcast.OutputPacket[2] = 0.10; // Step width
 
 			}
 			else if (nFloat0 == 5)
 			{
 				nFloat0 = 5; // Curve
 				printf(" (Curve: %d) \n", nFloat0);
-				broadcast.OutputPacket[1] = 3; // X
-				broadcast.OutputPacket[2] = -1; // Y
-				broadcast.OutputPacket[3] = -30.00001; // Psi. Care for singuarity. Add 0.00001
+				broadcast.OutputPacket[1] = 1.0; // X
+				broadcast.OutputPacket[2] = 0; // Y
+				broadcast.OutputPacket[3] = 0;// Psi. Care for singuarity. Add 0.00001
 			}
 			else if (nFloat0 == 6)
 			{
 				nFloat0 = 6; // Circle clockwise
 				printf(" (Circle: %d) \n", nFloat0);
-				broadcast.OutputPacket[1] = 0.2; // radius
+				broadcast.OutputPacket[1] = 0.25; // radius
 				broadcast.OutputPacket[2] = 1.57; // psi_all positive
 				broadcast.OutputPacket[3] = 0; // useless
 			}
@@ -369,7 +373,23 @@ void* send(void * data)
 			{
 				nFloat0 = 7; // Circle anticlockwise
 				printf(" (Circle: %d) \n", nFloat0);
-				broadcast.OutputPacket[1] = 0.45; // radius
+				broadcast.OutputPacket[1] = 0.25; // radius
+				broadcast.OutputPacket[2] = 1.57; // psi_all positive
+				broadcast.OutputPacket[3] = 0; // useless
+			}
+			else if (nFloat0 == 16)
+			{
+				nFloat0 = 16; // Circle clockwise
+				printf(" (Circle: %d) \n", nFloat0);
+				broadcast.OutputPacket[1] = 0.4; // psi_max
+				broadcast.OutputPacket[2] = 1.57; // psi_all positive
+				broadcast.OutputPacket[3] = 0; // useless
+			}
+			else if (nFloat0 == 17)
+			{
+				nFloat0 = 17; // Circle anticlockwise
+				printf(" (Circle: %d) \n", nFloat0);
+				broadcast.OutputPacket[1] = 0.4; // radius
 				broadcast.OutputPacket[2] = 1.57; // psi_all positive
 				broadcast.OutputPacket[3] = 0; // useless
 			}
@@ -381,8 +401,10 @@ void* send(void * data)
 				nFloat0 = 8;
 				printf(" Kicking \n");
 				broadcast.OutputPacket[1] = 1; // leftKicking
-				broadcast.OutputPacket[2] = 1; // strength
+				broadcast.OutputPacket[2] = 2; // strength
 				broadcast.OutputPacket[3] = 0; // angle	
+				broadcast.OutputPacket[7] = 351.216; // angle	camera_x
+				broadcast.OutputPacket[8] = 368.675; // angle	camera_y
 			}
 			else if (nFloat0 == 9){
 				nFloat0 = 9;
@@ -404,13 +426,31 @@ void* send(void * data)
 				nFloat0 = 99;
 				printf("Stopping now");
 			}
+			else if (nFloat0 == 55)
+			{
+				nFloat0 = 5; // Curve
+				printf(" (Curve: %d) \n", nFloat0);
+				broadcast.OutputPacket[1] = 1.0; // X
+				broadcast.OutputPacket[2] = -4.0; // Y
+				broadcast.OutputPacket[3] = 1;// Psi. Care for singuarity. Add 0.00001
+			}
+			else if(nFloat0 == 88){
+				nFloat0 = 8;
+				printf(" Kicking wrong\n");
+				broadcast.OutputPacket[1] = 1; // leftKicking
+				broadcast.OutputPacket[2] = 2; // strength
+				broadcast.OutputPacket[3] = 0; // angle	
+				broadcast.OutputPacket[7] = 551.216; // angle	camera_x
+				broadcast.OutputPacket[8] = 368.675; // angle	camera_y
+			}
 			else{
 				std::cout << nFloat0 << " non existing" << std::endl;
 			}
 			broadcast.OutputPacket[0] = nFloat0;
-			broadcast.OutputPacket[4] = ID;
-			std::cout << "ID: " << ID << std::endl;
-			// printf("%f\n",broadcast.OutputPacket[0]);
+			// broadcast.OutputPacket[8] = ID;
+
+			// // std::cout << "ID: " << ID << std::endl;
+			// printf("%f, %f\n",broadcast.OutputPacket[8], broadcast.OutputPacket[9]);
 			SendData();
 		}
 	}

@@ -29,11 +29,11 @@ plot_body_angle = 0;
 plot_phase      = 0;
 plot_yaw        = 0;
 scale   = 1;
-begin   = 1;
-% stop = 1000;
+begin   = 1;     
+% stop = 1000;  
 stop    = size(data,1);
 t       = data(begin:stop,1);
-
+ 
 robot_width             = 0.18;
 foot_length_front       = 0.155;
 % foot_length_back        = 0.095;
@@ -169,6 +169,7 @@ lfootz = data(begin:stop,94);
 
 rfootx = data(begin:stop,95);
 rfooty = data(begin:stop,96);
+
 rfootz = data(begin:stop,97);
 
 prefy  = data(begin:stop,98);
@@ -611,7 +612,7 @@ if plot_ref == 1
     plot(t, x_sup,'--')
     plot(t, x_swing,'--')
     plot(t,prefx)
-    legend('body','sup','swing')
+    legend('body','lfoot','rfoot')
     title('x axis')
     subplot(5,1,2)
     plot(t, bodyy,'.')
@@ -623,7 +624,7 @@ if plot_ref == 1
     plot(t, y_swing,'.')
     plot(t, prefy)
 %     plot(t, leftSupport*0.1,'.')
-    legend('body','sup','swing', 'reference zmp')
+    legend('body','lfoot','rfoot', 'reference zmp')
     title('y axis')
     subplot(5,1,3)
     plot(t, lfootz,'.')
@@ -631,8 +632,8 @@ if plot_ref == 1
     grid on
     grid minor
     plot(t, rfootz,'.')
-    plot(t, swingz_fk,'.')
-    plot(t, supz_fk,'.')
+%     plot(t, swingz_fk,'.')
+%     plot(t, supz_fk,'.')
     %     a = gca;
     %     plot([idx1, idx1], [a.YLim], 'g--')
     %     plottools
@@ -794,6 +795,8 @@ foot_distance(foot_distance == 0) = [];
 figure
 plot(t, ref_psi_support*180/pi,'.')
 hold on
+ grid on
+    grid minor
 plot(t, ref_psi_swing*180/pi,'.')
 plot(t, ref_psi_body*180/pi,'.')
 legend('Support','Swing','Body')

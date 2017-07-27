@@ -1,0 +1,107 @@
+t0 = 0;
+    t1 = 0.01;
+    t2 = 0.1;
+    t3 = 0.2;
+    t4 = 0.3;
+    t5 = 0.5;
+    t6 = 0.55;
+    t7 = 0.99;
+    t8 = 1;
+
+    zk0 = 0;
+    zk1 = 0;
+    zk2 = 0.3;
+    zk3 = 0.7;
+    zk4 = 0.6;
+    zk5 = 0.15;
+    zk6 = 0.05;
+    zk7 = 0;
+    zk8 = 0;
+    ///
+    // t0 = 0;
+    // t1 = 0.01;
+    // t2 = 0.3;
+    // t3 = 0.45;
+    // t4 = 0.6;
+    // t5 = 0.8;
+    // t6 = 0.99;
+    // t7 = 1;
+
+    // zk0 = 0;
+    // zk1 = 0;
+    // zk2 = 1;
+    // zk3 = 0.2;
+    // zk4 = 0;
+    // zk5 = 0;
+    // zk6 = 0;
+    // zk7 = 0;
+
+
+    t_posz[0] = t0*cycle_duration;
+    t_posz[1] = t1*cycle_duration;//cycle_duration - parameters.t_dsp;
+    t_posz[2] = t2*cycle_duration;
+    t_posz[3] = t3*cycle_duration;
+    t_posz[4] = t4*cycle_duration;
+    t_posz[5] = t5*cycle_duration;
+    t_posz[6] = t6*cycle_duration;
+    t_posz[7] = t7*cycle_duration;
+    t_posz[8] = t8*cycle_duration;
+
+    z[0] = parameters.robot_ankle_to_foot+zk0 * swing_foot_z_peak;
+    z[1] = parameters.robot_ankle_to_foot+zk1 * swing_foot_z_peak;
+    z[2] = parameters.robot_ankle_to_foot+zk2 * swing_foot_z_peak;
+    z[3] = parameters.robot_ankle_to_foot+zk3 * swing_foot_z_peak;
+    z[4] = parameters.robot_ankle_to_foot+zk4 * swing_foot_z_peak;
+    z[5] = parameters.robot_ankle_to_foot+zk5 * swing_foot_z_peak;
+    z[6] = parameters.robot_ankle_to_foot+zk6 * swing_foot_z_peak;
+    z[7] = parameters.robot_ankle_to_foot+zk7 * swing_foot_z_peak;
+    z[8] = parameters.robot_ankle_to_foot+zk8 * swing_foot_z_peak;
+
+
+    // t_posy[0] = t0*cycle_duration;
+    // t_posy[1] = (t3-0.1)*cycle_duration;
+    // t_posy[2] = t3*cycle_duration;
+    // t_posy[3] = t4*cycle_duration;
+    // t_posy[4] = t5*cycle_duration;//cycle_duration - parameters.t_dsp;
+    // t_posy[5] = t6*cycle_duration;//cycle_duration - parameters.t_dsp/2;
+    t_posy[0] = t0*cycle_duration;
+    t_posy[1] = 0.01*cycle_duration;
+    t_posy[2] = 0.02*cycle_duration;
+    t_posy[3] = 0.15*cycle_duration;
+    t_posy[4] = 0.35*cycle_duration;   
+    t_posy[5] = 0.4*cycle_duration;
+    t_posy[6] = 0.5*cycle_duration;
+    t_posy[7] = 0.6*cycle_duration;
+    t_posy[8] = 0.65*cycle_duration;//cycle_duration - parameters.t_dsp;
+    t_posy[9] = 0.75*cycle_duration;//cycle_duration - parameters.t_dsp/2;
+    t_posy[10] = 0.85*cycle_duration;//cycle_duration - parameters.t_dsp/2;
+    t_posy[11] = 0.95*cycle_duration;//cycle_duration - parameters.t_dsp/2;
+    t_posy[12] = 0.99*cycle_duration;//cycle_duration - parameters.t_dsp/2;
+    t_posy[13] = 1*cycle_duration;//cycle_duration - parameters.t_dsp/2;
+
+
+
+    yk0 = 0;
+    yk1 = 0.3;
+    yk2 = 0.9;
+    yk3 = 0.95;
+    yk4 = 1.002;
+    yk5 = 1.001;
+    yk6 = 1;
+    double swinging_distance = y_swing_foot_end - y_swing_foot_start;
+
+    y[0]                      = y_swing_foot_start + swinging_distance * yk0;
+    y[1]                      = y_swing_foot_start + swinging_distance * yk0;
+    y[2]                      = y_swing_foot_start + swinging_distance * yk0;
+    y[3]                      = y_swing_foot_start + swinging_distance * yk1;
+    y[4]                      = y_swing_foot_start + swinging_distance * yk2;
+    y[5]                      = y_swing_foot_start + swinging_distance * yk3;
+    y[6]                      = y_swing_foot_start + swinging_distance * yk4;
+    y[7]                      = y_swing_foot_start + swinging_distance * yk5;
+    y[8]                      = y_swing_foot_start + swinging_distance * yk6;
+    y[9]                      = y_swing_foot_start + swinging_distance * yk6;
+    y[10]                      = y_swing_foot_start + swinging_distance * yk6;
+    y[11]                      = y_swing_foot_start + swinging_distance * yk6;
+    y[12]                      = y_swing_foot_start + swinging_distance * yk6;
+    y[13]                      = y_swing_foot_start + swinging_distance * yk6;
+
