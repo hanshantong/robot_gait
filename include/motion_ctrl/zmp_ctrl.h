@@ -7,7 +7,7 @@
 #include <vector>
 #include <stdlib.h>     
 #include <stdio.h>
-#include <math.h>
+#include <math.h> 	
 #include <vector>
 #include <cmath>
 #include <dlib/matrix.h>
@@ -30,28 +30,19 @@
 // #include "gyro_info/com.h"
 // #include "gyro_info/gyro_euler.h"
 
-	/***********************Kick Part START*************************/
+		/***********************Kick Part START*************************/
 //Kick Time Parameters
 #define KICK_INIT_TIME 1.0
 #define KICK_COMTRANS_TIME 2.0
-#define KICK_LIFT_TIME 3.0
+#define KICK_LIFT_TIME 10.0
+#define KICK_MIDDLE_TIME 5
 #define KICK_SWING_TIME_SOFT   1.0	//about 0.8m
 #define KICK_SWING_TIME_MEDIUM 0.7  //about 2.3m
-<<<<<<< HEAD
-#define KICK_SWING_TIME_STRONG 0.4 //about 5.5m	
+#define KICK_SWING_TIME_STRONG 5 //about 5.5m
 
-#define KICK_KICK2DSP_TIME 1.5
-=======
-#define KICK_SWING_TIME_STRONG 0.4 //about 5.5m
-
-// #define KICK_SOFT_VEL 0.2
-// #define KICK_MEDIUM_VEL 0.5
-// #define KICK_STRONG_VEL 0.5
-
-#define KICK_KICK2DSP_TIME_SOFT 1.5
-#define KICK_KICK2DSP_TIME_MEDIUM 1.5
+#define KICK_KICK2DSP_TIME_SOFT 2.0
+#define KICK_KICK2DSP_TIME_MEDIUM 2.0
 #define KICK_KICK2DSP_TIME_STRONG 2.0
->>>>>>> 9ac890f44e7798dce439092f5d5205afe2111bf9
 
 #define KICK_DSP_TIME 3.0
 
@@ -63,12 +54,7 @@
 #define KICK_SOFT 0
 #define KICK_MEDIUM 1
 #define KICK_STRONG 2
-<<<<<<< HEAD
-#define KICK_PENALTY_LEFT 3
-#define KICK_PENALTY_RIGHT 4
-=======
 #define KICK_HIGHKICK 3
->>>>>>> 9ac890f44e7798dce439092f5d5205afe2111bf9
 
 struct kickPoint
 {
@@ -102,6 +88,7 @@ struct Parameters{
 	double zmp_offset_y_left;
 	double zmp_offset_y_right;
 	double zmp_offset_y;
+	double zmp_offset_y_delta;
 
 	double step_length;
 	double step_width;
@@ -130,6 +117,7 @@ struct Parameters{
 	double t_ssp;
 	double g;
 	double Tipping_Scale_left, Tipping_Scale_right;
+	double Tipping_Scale_ankle_left, Tipping_Scale_ankle_right;
 	double Tipping_Scale_left_swing, Tipping_Scale_left_support;
 	double Tipping_Scale_right_swing, Tipping_Scale_right_support;
 	double Q_x;
@@ -192,8 +180,8 @@ public:
 		void  	calc_trajectories_walk_curve(int forward, int leftFootStart, double x_goal, double y_goal, double psi_goal);  
 		void 	calc_trajectories_walk_side(int leftside, int leftFootStart, int step_amount, double step_length); 
 		void 	calc_trajectories_ssp_squat();
-		void calc_trajectories_walk_circling(int clockwise, double radius, double step_width, double psi_all);
-
+		void 	calc_trajectories_walk_circling(int clockwise, double radius, double step_width, double psi_all);
+		void	calc_trajectories_walk_rotating(int clockwise, double psi_max/*radius*/, double psi_all);
 		void stopGait();
 
 
@@ -226,14 +214,11 @@ public:
 			void save_last_step(double * support_x_last, double * support_y_last, double * support_z_last, double * support_psi_last,
 				double * swing_x_last, double * swing_y_last, double * swing_z_last, double * swing_theta_last, double * swing_psi_last,
 				double * x_zmp_last, double * y_zmp_last);
-		//KICK	
-<<<<<<< HEAD
-			bool kick(int kickType, double camera_x, double camera_y);
-			void highkick();
-=======
-			bool kick(int kickType, double camera_x, double camera_y, double yaw = 0.0);
->>>>>>> 9ac890f44e7798dce439092f5d5205afe2111bf9
-
+			bool kick(int kickType,double camera_x, double camera_y, double yaw=0.0);
+			double body_x, body_y, body_psi;
+			// float get_x();
+			// float get_y();
+			// float get_psi();
 		private:
 			std::vector<double> leftIsSupportLeg_vector;
 
@@ -360,8 +345,10 @@ public:
 		void calc_p_ref_heel_curve(int forward, int leftFootStart, std::vector<double> x_footprint_on_spline, std::vector<double> y_footprint_on_spline, std::vector<double> yaw_footprint_on_spline);
 		void calc_p_ref_heel_side(int leftside, int leftFootStart, int step_amount, double step_length);
 		void calc_p_ref_heel_circling(int clockwise, double radius, int step_amount, double step_psi);
-
+		void calc_p_ref_heel_rotating(int clockwise, int step_amount, double step_psi);
+		
 		void calc_p_ref_circling(std::vector<double> *p_ref_x, std::vector<double> *p_ref_y, int clockwise, double radius, int step_amount, double step_psi); 
+		void calc_p_ref_rotating(std::vector<double> *p_ref_x, std::vector<double> *p_ref_y, int clockwise, int step_amount, double step_psi); 
 
 		void calc_p_ref_only_ssp();
 		void calc_p_ref_side(std::vector<double> *p_ref_x, std::vector<double> *p_ref_y, int forward, int leftFootStart, int step_amount, double step_length); 
@@ -371,6 +358,7 @@ public:
 		void calc_p_ref_transition_curve(int forward, int leftFootStart, std::vector<double> x_footprint_on_spline, std::vector<double> y_footprint_on_spline, std::vector<double> yaw_footprint_on_spline);
 		void calc_p_ref_transition_side(int leftside, int leftFootStart, int step_amount, double step_length);
 		void calc_p_ref_transition_circling(int clockwise, double radius, int step_amount, double step_psi);
+		void calc_p_ref_transition_rotating(int clockwise, int step_amount, double step_psi);
 
 		void calc_p_ref_transition_only_ssp();
 		void calc_p_ref_transition_only_ssp_sine();
@@ -448,6 +436,14 @@ public:
 			std::vector<double> * y_ref_swing_foot_complete, std::vector<double> * z_ref_swing_foot_complete, 
 			std::vector<double> * theta_ref_swing_foot_complete, std::vector<double> * psi_ref_swing_foot_complete, 
 			int clockwise, int step_amount, double step_psi);
+		//Rotating
+		void calculate_swing_foot_complete_trajectory_heel_rotating(
+			std::vector<double> p_ref_x, std::vector<double> p_ref_y, 
+			std::vector<double> * x_ref_swing_foot_complete, 
+			std::vector<double> * y_ref_swing_foot_complete, std::vector<double> * z_ref_swing_foot_complete, 
+			std::vector<double> * theta_ref_swing_foot_complete, std::vector<double> * psi_ref_swing_foot_complete, 
+			int clockwise, int step_amount, double step_psi);
+
 		void convert_foot2ankle(joint_state foot, joint_state * ankle);
 
 		dlib::matrix<double, 6, 1> InverseKinematics_analytical(int left, joint_state Foot, joint_state Body);
@@ -475,7 +471,6 @@ public:
 		void calculate_absolute_foot_position();
 		void generate_foot_print_on_spline(std::vector<double> xSpline, std::vector<double> ySpline, std::vector<double> * x_footprint_on_spline, std::vector<double> * y_footprint_on_spline,std::vector<double> * yaw_footprint_on_spline);
 		int closest(std::vector<double>  vec, double value);
-	
 	//kick
 		void cam2kick(double camera_x, double camera_y, double &r_kick_x, double &r_kick_y);
 		bool input2target(kickPoint input, kickPoint &target);
@@ -487,6 +482,7 @@ public:
 		void kick_swing_trajectory_generator_one_dimension(int mode, double startX, double offsetX, int pointNum, double* parametersX, double* parametersT, double time);
 		void kick_support_generator(kickPoint end, double time);
 		void kick_zmp_generator(kickPoint end, double time);
+
 	};
 
 

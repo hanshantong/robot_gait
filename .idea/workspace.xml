@@ -9,25 +9,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4e82bca9-1b98-4284-8ff3-29d99153f619" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/UDPControl/src/P1MC" afterPath="$PROJECT_DIR$/UDPControl/src/P1MC" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/P1MC" afterPath="$PROJECT_DIR$/src/P1MC" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/objects/P1MC.o" afterPath="$PROJECT_DIR$/src/objects/P1MC.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/objects/ati.o" afterPath="$PROJECT_DIR$/src/objects/ati.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/objects/dxl_actuator.o" afterPath="$PROJECT_DIR$/src/objects/dxl_actuator.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/objects/dxl_packet.o" afterPath="$PROJECT_DIR$/src/objects/dxl_packet.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/objects/kalman.o" afterPath="$PROJECT_DIR$/src/objects/kalman.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/objects/motion_ctrl.o" afterPath="$PROJECT_DIR$/src/objects/motion_ctrl.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/objects/mti.o" afterPath="$PROJECT_DIR$/src/objects/mti.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/objects/pid.o" afterPath="$PROJECT_DIR$/src/objects/pid.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/objects/port.o" afterPath="$PROJECT_DIR$/src/objects/port.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/objects/zmp_ctrl.o" afterPath="$PROJECT_DIR$/src/objects/zmp_ctrl.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/UDPControl/src/data.txt" afterPath="$PROJECT_DIR$/UDPControl/src/data.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/include/motion_ctrl/zmp_ctrl.h" afterPath="$PROJECT_DIR$/include/motion_ctrl/zmp_ctrl.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/P1MC.cpp" afterPath="$PROJECT_DIR$/src/P1MC.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/motion_ctrl/zmp_ctrl.cpp" afterPath="$PROJECT_DIR$/src/motion_ctrl/zmp_ctrl.cpp" />
-    </list>
+    <list default="true" id="4e82bca9-1b98-4284-8ff3-29d99153f619" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -39,20 +21,20 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="zmp_ctrl.cpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="zmp_ctrl.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/motion_ctrl/zmp_ctrl.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1284">
-              <caret line="6701" column="0" lean-forward="true" selection-start-line="6701" selection-start-column="0" selection-end-line="6701" selection-end-column="0" />
+            <state relative-caret-position="4870">
+              <caret line="7480" column="29" lean-forward="true" selection-start-line="7480" selection-start-column="29" selection-end-line="7480" selection-end-column="29" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="zmp_ctrl.h" pinned="false" current-in-tab="false">
+      <file leaf-file-name="zmp_ctrl.h" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/include/motion_ctrl/zmp_ctrl.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="300">
+            <state relative-caret-position="1080">
               <caret line="69" column="2" lean-forward="false" selection-start-line="69" selection-start-column="2" selection-end-line="69" selection-end-column="2" />
               <folding />
             </state>
@@ -62,8 +44,8 @@
       <file leaf-file-name="P1MC.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/P1MC.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="31">
-              <caret line="38" column="16" lean-forward="true" selection-start-line="38" selection-start-column="16" selection-end-line="38" selection-end-column="16" />
+            <state relative-caret-position="760">
+              <caret line="38" column="16" lean-forward="false" selection-start-line="38" selection-start-column="16" selection-end-line="38" selection-end-column="16" />
               <folding />
             </state>
           </provider>
@@ -100,10 +82,10 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="65" />
-    <option name="y" value="24" />
-    <option name="width" value="1855" />
-    <option name="height" value="1056" />
+    <option name="x" value="64" />
+    <option name="y" value="-11" />
+    <option name="width" value="1857" />
+    <option name="height" value="1092" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -395,19 +377,20 @@
       <workItem from="1500361160798" duration="7244000" />
       <workItem from="1500446894600" duration="4540000" />
       <workItem from="1500514713363" duration="10798000" />
+      <workItem from="1501169459623" duration="93000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="23253000" />
+    <option name="totallyTimeSpent" value="23346000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="24" width="1855" height="1056" extended-state="0" />
+    <frame x="64" y="-11" width="1857" height="1092" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25983828" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.07135362" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.07135576" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="LuaJ" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -439,6 +422,30 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/motion_ctrl/zmp_ctrl.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/motion_ctrl/zmp_ctrl.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1380">
+          <caret line="69" column="2" lean-forward="false" selection-start-line="69" selection-start-column="2" selection-end-line="69" selection-end-column="2" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/P1MC.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="760">
+          <caret line="38" column="16" lean-forward="true" selection-start-line="38" selection-start-column="16" selection-end-line="38" selection-end-column="16" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/motion_ctrl/zmp_ctrl.cpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -513,30 +520,29 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-18464">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/P1MC.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="31">
-          <caret line="38" column="16" lean-forward="true" selection-start-line="38" selection-start-column="16" selection-end-line="38" selection-end-column="16" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/include/motion_ctrl/zmp_ctrl.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="69" column="2" lean-forward="false" selection-start-line="69" selection-start-column="2" selection-end-line="69" selection-end-column="2" />
+        <state relative-caret-position="760">
+          <caret line="38" column="16" lean-forward="false" selection-start-line="38" selection-start-column="16" selection-end-line="38" selection-end-column="16" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/motion_ctrl/zmp_ctrl.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1284">
-          <caret line="6701" column="0" lean-forward="true" selection-start-line="6701" selection-start-column="0" selection-end-line="6701" selection-end-column="0" />
+        <state relative-caret-position="4870">
+          <caret line="7480" column="29" lean-forward="true" selection-start-line="7480" selection-start-column="29" selection-end-line="7480" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/include/motion_ctrl/zmp_ctrl.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1080">
+          <caret line="69" column="2" lean-forward="false" selection-start-line="69" selection-start-column="2" selection-end-line="69" selection-end-column="2" />
           <folding />
         </state>
       </provider>
